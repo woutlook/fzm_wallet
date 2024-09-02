@@ -1,0 +1,25 @@
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
+
+// android {
+//     compileSdkVersion 32  // 更新为你需要的 SDK 版本
+//     defaultConfig {
+//         targetSdkVersion 32  // 更新为你需要的 SDK 版本
+//     }
+// }
