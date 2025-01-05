@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:fwallet/api/fzm_http.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/pages/wallet/ex_item.dart';
-import 'package:fwallet/utils/app_utils.dart';
-import 'package:fwallet/bean/ex_bean.dart';
+import 'package:fzm_wallet/models/chain33_http.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/pages/wallet/ex_item.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
+import 'package:fzm_wallet/models/ex_bean.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class ExPage extends StatefulWidget {
   const ExPage({super.key});
@@ -24,6 +25,10 @@ class _ExPageState extends State<ExPage> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return ListView.builder(
         itemCount: _newList.length,
         itemBuilder: (context, index) => InkWell(

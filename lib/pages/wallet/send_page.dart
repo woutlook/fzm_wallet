@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/models/store.dart';
 
-import 'package:fwallet/api/tx.dart';
-import 'package:fwallet/bean/coin_bean.dart';
-import 'package:fwallet/bean/pwallet_bean.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/pages/wallet/wallet_item.dart';
-import 'package:fwallet/provider/p.dart';
-import 'package:fwallet/utils/app_utils.dart';
-import 'package:fwallet/widget/widgets.dart';
-// import 'package:fwallet/widget/.dart';
+import 'package:fzm_wallet/models/tx.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/pages/wallet/wallet_item.dart';
+import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
+// import 'package:fzm_wallet/widget/.dart';
 
 class SendPage extends ConsumerStatefulWidget {
   const SendPage({super.key});
@@ -21,7 +23,7 @@ class SendPage extends ConsumerStatefulWidget {
 
 class _SendPageState extends ConsumerState<SendPage> {
   String _balance = '0.00';
-  TxFee _fee = TxFee();
+  Fee _fee = Fee();
   double? _setFee;
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
@@ -29,9 +31,15 @@ class _SendPageState extends ConsumerState<SendPage> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     Map<String, dynamic>? arguments =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final coin = arguments?['coin'] as CoinBean;
+    final coin = arguments?['coin'] as Coin;
+    final address = arguments?['address'] as String?;
+    _addressController.text = address ?? '';
     final title = '${coin.name}(${coin.nickname})转账';
     final wallet = ref.watch(walletProvider);
     final balance = ref.watch(balanceProvider(coin));
@@ -45,7 +53,7 @@ class _SendPageState extends ConsumerState<SendPage> {
         },
         loading: () {},
         error: (e, s) {});
-    final fee = ref.watch(feeProvider(coin.chain!));
+    final fee = ref.watch(feeProvider(coin.chain));
     fee.when(
         data: (data) {
           setState(() {
@@ -54,12 +62,12 @@ class _SendPageState extends ConsumerState<SendPage> {
         },
         loading: () {},
         error: (e, s) {});
-    final max = double.tryParse(_fee.high ?? '0.0') ?? 0.0;
-    final min = double.tryParse(_fee.low ?? '0.0') ?? 0.0;
-    final setFee = double.tryParse(_fee.average ?? '0.0') ?? 0.0;
+    final max = _fee.high ?? 0.0;
+    final min = _fee.low ?? 0.0;
+    final setFee = _fee.average ?? 0.0;
 
     final addressCard = Card(
-      color: Colors.white.withOpacity(0.88),
+      color: Colors.white.withAlpha(225),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -82,12 +90,17 @@ class _SendPageState extends ConsumerState<SendPage> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.contacts),
-                  onPressed: () {},
+                  onPressed: () async {
+                    await Navigator.of(context).pushNamed(
+                        MyRouter.CONTECTS_PAGE,
+                        arguments: {'coin': coin});
+                  },
                 ),
                 const SizedBox(width: 10),
-                scanButton(context, size: 24, (barcode) {
+                scanButton(context, size: 24, (barcodeCapture) {
                   setState(() {
-                    // _addressController.text = barcode;
+                    // final address = getScanResult(barcodeCapture);
+                    // _addressController.text = address ?? '';
                   });
                 }),
               ],
@@ -115,7 +128,7 @@ class _SendPageState extends ConsumerState<SendPage> {
       ),
     );
     final amountCard = Card(
-      color: Colors.white.withOpacity(0.88),
+      color: Colors.white.withAlpha(225),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -155,7 +168,7 @@ class _SendPageState extends ConsumerState<SendPage> {
       ),
     );
     final feeCard = Card(
-      color: Colors.white.withOpacity(0.88),
+      color: Colors.white.withAlpha(225),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -214,7 +227,7 @@ class _SendPageState extends ConsumerState<SendPage> {
       ),
     );
     final remarkCard = Card(
-      color: Colors.white.withOpacity(0.88),
+      color: Colors.white.withAlpha(225),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -290,11 +303,11 @@ class _SendPageState extends ConsumerState<SendPage> {
             ),
           ),
           onPressed: () async {
-            final ok = await wallet.unlock(context);
-            if (!ok) {
+            final password = await showPasswordDialog(context);
+            if (password == null) {
               return;
             }
-            _transfer(coin, wallet);
+            _transfer(coin, wallet, password);
           },
           child: const Text(
             '确认转账',
@@ -314,7 +327,7 @@ class _SendPageState extends ConsumerState<SendPage> {
               children: [
                 const Spacer(),
                 Text(
-                  wallet.name ?? '',
+                  wallet.name,
                   style: const TextStyle(fontSize: 20),
                 ),
                 const SizedBox(width: 16),
@@ -339,10 +352,8 @@ class _SendPageState extends ConsumerState<SendPage> {
     );
   }
 
-  Future<String> _showBottomDrawer(context, coin) async {
-    final db = getDB();
-    final list = await db.query("Wallet");
-    final wallets = list.map((e) => PwalletBean.fromJson(e)).toList();
+  Future<String> _showBottomDrawer(context, Coin coin) async {
+    final wallets = store.getWalletList();
     final address = await showModalBottomSheet<String>(
       context: context,
       builder: (BuildContext context) {
@@ -354,69 +365,63 @@ class _SendPageState extends ConsumerState<SendPage> {
           child: ListView.builder(
             itemCount: wallets.length,
             itemBuilder: (context, index) {
-              final wallet = wallets[index];
-              return FutureBuilder(
-                future: getCoin(
-                    wallet.id ?? 1, coin.name ?? '', coin.chain ?? 'ETH'),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return const Center(child: Text('Error'));
-                  } else {
-                    final wcoin = snapshot.data;
-                    final address = wcoin?.address ?? '';
-                    final wgt = Column(
+              final name = wallets[index];
+              return Builder(builder: (context) {
+                final wallet = store.getWallet(name);
+                if (wallet == null) {
+                  return const SizedBox();
+                }
+
+                final address = wallet.getAccountAddress(chain: coin.chain);
+                final wgt = Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisSize: MainAxisSize
+                          .min, // 设置 mainAxisSize 为 MainAxisSize.min
                       children: [
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisSize: MainAxisSize
-                              .min, // 设置 mainAxisSize 为 MainAxisSize.min
-                          children: [
-                            const SizedBox(width: 50),
-                            Text(
-                              wallet.name ?? '',
-                              style: const TextStyle(
-                                  fontSize: 13, color: Colors.white),
-                            ),
-                            const SizedBox(width: 20),
-                            Text(
-                              wallet.typeString(),
-                              style: TextStyle(
-                                  fontSize: 13, color: AppColors.gray8e),
-                            ),
-                            const Spacer(),
-                          ],
+                        const SizedBox(width: 50),
+                        Text(
+                          wallet.name,
+                          style: const TextStyle(
+                              fontSize: 13, color: Colors.white),
                         ),
-                        const SizedBox(height: 15),
-                        Row(
-                          mainAxisSize: MainAxisSize
-                              .min, // 设置 mainAxisSize 为 MainAxisSize.min
-                          children: [
-                            const SizedBox(width: 50),
-                            Text(
-                              address.length > 34
-                                  ? '${address.substring(0, 18)}...${address.substring(address.length - 16)}'
-                                  : address,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.gray8e,
-                                fontFamily: 'monospace',
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: 20),
+                        Text(
+                          wallet.typeString(),
+                          style:
+                              TextStyle(fontSize: 13, color: AppColors.gray8e),
+                        ),
+                        const Spacer(),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      mainAxisSize: MainAxisSize
+                          .min, // 设置 mainAxisSize 为 MainAxisSize.min
+                      children: [
+                        const SizedBox(width: 50),
+                        Text(
+                          address.length > 34
+                              ? '${address.substring(0, 18)}...${address.substring(address.length - 16)}'
+                              : address,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.gray8e,
+                            fontFamily: 'monospace',
+                          ),
                         ),
                       ],
-                    );
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 20),
-                      child: WalletItem(wgt, () {
-                        Navigator.of(context).pop(address);
-                      }, wid: wallet.id ?? 1),
-                    );
-                  }
-                },
-              );
+                    ),
+                  ],
+                );
+                return Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: WalletItem(wgt, () {
+                    Navigator.of(context).pop(address);
+                  }, name: wallet.name),
+                );
+              });
             },
           ),
         );
@@ -425,9 +430,8 @@ class _SendPageState extends ConsumerState<SendPage> {
     return address ?? '';
   }
 
-  void _transfer(CoinBean coin, PwalletBean wallet) async {
-    if (wallet.type == PwalletBean.TYPE_KEYADD ||
-        wallet.type == PwalletBean.TYPE_RECOVER) {
+  void _transfer(Coin coin, Wallet wallet, String password) async {
+    if (wallet.type == WalletType.address) {
       return;
     }
 
@@ -449,7 +453,12 @@ class _SendPageState extends ConsumerState<SendPage> {
 
     final note = _remarkController.text;
     final fee = _setFee;
-    final txArgs = TxArgs(wallet, coin, to, amount, fee!, wallet.realPassword!,
+    final txArgs = TxArgs(
+        coin: coin,
+        to: to,
+        amount: amount,
+        fee: fee!,
+        password: password,
         note: note);
 
     // // 显示对话框
@@ -471,7 +480,7 @@ class _SendPageState extends ConsumerState<SendPage> {
     EasyLoading.show(status: '正在发送交易，请等待...');
 
     // 监听交易结果
-    ref.watch(sendTxProvider(txArgs)).when(
+    ref.read(sendTxProvider(txArgs)).when(
       data: (result) {
         // Navigator.of(context).pop(); // 关闭对话框
         EasyLoading.dismiss();

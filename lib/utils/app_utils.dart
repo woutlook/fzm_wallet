@@ -2,17 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:logger/logger.dart';
 
+enum MsgType { info, debug, warning, error }
+
 void toast(String msg,
     {Toast? duration = Toast.LENGTH_SHORT,
-    ToastGravity? gravity = ToastGravity.CENTER}) {
+    MsgType type = MsgType.info,
+    ToastGravity? gravity = ToastGravity.BOTTOM_RIGHT}) {
+  Color color;
+  switch (type) {
+    case MsgType.info:
+      color = Colors.green;
+      break;
+    case MsgType.debug:
+      color = Colors.blue;
+      break;
+    case MsgType.warning:
+      color = Colors.orange;
+      break;
+    case MsgType.error:
+      color = Colors.red;
+      break;
+  }
   Fluttertoast.showToast(
-      msg: msg,
-      toastLength: duration,
-      gravity: gravity,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.red,
-      textColor: Colors.white,
-      fontSize: 16.0);
+    msg: msg,
+    toastLength: duration,
+    gravity: gravity,
+    timeInSecForIosWeb: 1,
+    backgroundColor: color,
+    textColor: Colors.white,
+    fontSize: 16.0,
+  );
 }
 
 class Log {
@@ -36,4 +55,3 @@ class Log {
     Logger().e(msg);
   }
 }
-

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/utils/app_utils.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/models/coin.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import 'package:fwallet/bean/coin_bean.dart';
-import 'package:fwallet/provider/p.dart';
-import 'package:fwallet/const/my_routers.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class TransPage extends ConsumerStatefulWidget {
   const TransPage({super.key});
@@ -30,24 +30,37 @@ class _TransPageState extends ConsumerState<TransPage>
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     Map<String, dynamic>? arguments =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    var coin = arguments?["coin"] as CoinBean;
+    var coin = arguments?["coin"] as Coin;
     final title = '${coin.name}(${coin.nickname})';
-    final hideTx = SP.getHideLess1(coin.id!);
-    final balance = ref.watch(balanceProvider(coin));
-    balance.when(
+    final balancer = ref.watch(balanceProvider(coin));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+      ),
+      body: balancer.when(
         data: (data) {
           double ba = data;
           String strBalance = ba.toStringAsFixed(2);
-          setState(() {
-            _balance = strBalance;
-          });
+          _balance = strBalance;
+          return _build1(context, strBalance, coin, title);
         },
-        loading: () {},
-        error: (e, s) {});
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, s) => Center(child: Text('Error: $e')),
+      ),
+    );
+  }
 
-    final address = coin.address ?? "";
+  Widget _build1(
+      BuildContext context, String balance, Coin coin, String title) {
+    final wallet = ref.watch(walletProvider);
+    final address = wallet.getAccountAddress(chain: coin.chain);
 
     final card = Positioned(
       top: 20,
@@ -100,8 +113,7 @@ class _TransPageState extends ConsumerState<TransPage>
                   IconButton(
                     icon: const Icon(Icons.copy),
                     onPressed: () {
-                      Clipboard.setData(
-                          ClipboardData(text: coin.address ?? ""));
+                      Clipboard.setData(ClipboardData(text: address));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('地址已复制到剪贴板')),
                       );
@@ -114,131 +126,127 @@ class _TransPageState extends ConsumerState<TransPage>
         ),
       ),
     );
-    return Scaffold(
-      appBar: appBar(
-        context,
-        title,
-        bgColor: AppColors.gray6,
-        titleColor: Colors.white,
-        leadingColor: Colors.white,
-      ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Container(
-                height: 160,
-                color: AppColors.gray6,
-              ),
-              Expanded(
-                child: Container(
-                  color: Colors.white30,
-                  child: Column(
-                    children: [
-                      const SizedBox(
-                        height: 50,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+    return Stack(
+      children: [
+        Column(
+          children: [
+            Container(
+              height: 160,
+              color: AppColors.gray6,
+            ),
+            Expanded(
+              child: Container(
+                color: Colors.white30,
+                child: Column(
+                  children: [
+                    const SizedBox(
+                      height: 50,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        blackButton('转账', () {
+                          Navigator.pushNamed(context, MyRouter.SEND_PAGE,
+                              arguments: {'coin': coin});
+                        }, width: 150),
+                        blueButton('收款', () {
+                          Navigator.pushNamed(context, MyRouter.RECV_PAGE,
+                              arguments: {'coin': coin});
+                        }, width: 150),
+                        scanButton(context, (barcodeCapture) {
+                          Navigator.pushNamed(context, MyRouter.SEND_PAGE,
+                              arguments: {
+                                'coin': coin,
+                                // "to": getScanResult(barcodeCapture)
+                              });
+                          // todo: scan
+                        }, size: 32),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 8,
+                    ),
+                    Expanded(
+                      child: Column(
                         children: [
-                          blackButton('转账', () {
-                            Navigator.pushNamed(context, MyRouter.SEND_PAGE,
-                                arguments: {'coin': coin});
-                          }, width: 150),
-                          blueButton('收款', () {
-                            Navigator.pushNamed(context, MyRouter.RECV_PAGE,
-                                arguments: {'coin': coin});
-                          }, width: 150),
-                          scanButton(context, (barcodeCapute) {
-                            // todo: scan
-                          }, size: 32),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 8,
-                      ),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const Padding(
-                              padding:
-                                  EdgeInsets.only(top: 8, left: 8, right: 16),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.receipt_long),
-                                  SizedBox(width: 6),
-                                  Text('交易记录'),
-                                  Spacer(),
-                                  // Wrap(
-                                  //   crossAxisAlignment:
-                                  //       WrapCrossAlignment.center,
-                                  //   spacing: -10,
-                                  //   children: [
-                                  //     Checkbox(
-                                  //       value: hideTx,
-                                  //       onChanged: (value) {
-                                  //         SP.setHideLess1(coin.id!, value!);
-                                  //         setState(() {});
-                                  //       },
-                                  //     ),
-                                  //     Text('隐藏小于1${coin.nickname ?? ""}的交易'),
-                                  //   ],
-                                  // ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 8,
-                            ),
-                            TabBar(
-                              // labelPadding: const EdgeInsets.only(left: 8),
-                              isScrollable: true,
-                              tabAlignment: TabAlignment.start,
-                              controller: _tabcontroller,
-                              tabs: const [
-                                Tab(
-                                  child: Text(
-                                    '全部',
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                ),
-                                Tab(
-                                  child: Text(
-                                    '转账',
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                ),
-                                Tab(
-                                  child: Text(
-                                    '收款',
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                ),
+                          const Padding(
+                            padding:
+                                EdgeInsets.only(top: 8, left: 8, right: 16),
+                            child: Row(
+                              children: [
+                                Icon(Icons.receipt_long),
+                                SizedBox(width: 6),
+                                Text('交易记录'),
+                                Spacer(),
+                                // Wrap(
+                                //   crossAxisAlignment:
+                                //       WrapCrossAlignment.center,
+                                //   spacing: -10,
+                                //   children: [
+                                //     Checkbox(
+                                //       value: hideTx,
+                                //       onChanged: (value) {
+                                //         SP.setHideLess1(coin.id!, value!);
+                                //         setState(() {});
+                                //       },
+                                //     ),
+                                //     Text('隐藏小于1${coin.nickname ?? ""}的交易'),
+                                //   ],
+                                // ),
                               ],
                             ),
-                            Expanded(
-                              child: TabBarView(
-                                controller: _tabcontroller,
-                                children: [
-                                  _buildTabView(context, coin),
-                                  _buildTabView(context, coin),
-                                  _buildTabView(context, coin),
-                                ],
+                          ),
+                          const SizedBox(
+                            height: 8,
+                          ),
+                          TabBar(
+                            // labelPadding: const EdgeInsets.only(left: 8),
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            controller: _tabcontroller,
+                            tabs: const [
+                              Tab(
+                                child: Text(
+                                  '全部',
+                                  style: TextStyle(fontSize: 20),
+                                ),
                               ),
+                              Tab(
+                                child: Text(
+                                  '转账',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              ),
+                              Tab(
+                                child: Text(
+                                  '收款',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Expanded(
+                            child: TabBarView(
+                              controller: _tabcontroller,
+                              children: [
+                                _buildTabView(context, coin),
+                                _buildTabView(context, coin),
+                                _buildTabView(context, coin),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          card,
-        ],
-      ),
+            ),
+          ],
+        ),
+        card,
+      ],
     );
   }
 

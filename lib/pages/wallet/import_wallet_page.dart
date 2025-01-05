@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
-import 'package:fwallet/api/api.dart';
-import 'package:fwallet/api/fzm_http.dart';
-import 'package:fwallet/bean/tab_coin.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/provider/p.dart';
-import 'package:fwallet/bean/coin_bean.dart';
-import 'package:fwallet/bean/pwallet_bean.dart';
-import 'package:fwallet/utils/app_utils.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/models/chain33_http.dart';
+import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/models/store.dart';
+import 'package:fzm_wallet/models/tab_coin.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class ImportWalletPage extends StatefulWidget {
   const ImportWalletPage({super.key});
@@ -29,8 +28,8 @@ class _ImportWalletPageState extends State<ImportWalletPage>
   final TextEditingController _pw2Controller = TextEditingController();
   final TextEditingController _privController = TextEditingController();
 
-  List<CoinBean> _mainChains = [];
-  CoinBean? _tab2SelectedChain;
+  List<Coin> _mainChains = [];
+  Coin? _tab2SelectedChain;
 
   @override
   void initState() {
@@ -64,6 +63,10 @@ class _ImportWalletPageState extends State<ImportWalletPage>
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     final list = _mainChains.map((e) {
       return coinItem(
         context,
@@ -267,8 +270,8 @@ class _ImportWalletPageState extends State<ImportWalletPage>
     final passwordAgain = _pw2Controller.text;
     if (_checked(name, password, passwordAgain)) {
       if (index == 0) {
-        final mnemS = _mnemController.text;
-        final mnem = formatString(mnemS);
+        final mnem = _mnemController.text;
+        // final mnem = formatString(mnemS);
         _importMnemWallet(mnem, name, password);
       } else if (index == 1) {
         final privkey = _privController.text;
@@ -314,43 +317,45 @@ class _ImportWalletPageState extends State<ImportWalletPage>
     return regExp.hasMatch(str);
   }
 
-  void _importPrivWallet(privkey, name, password, CoinBean coin) async {
+  void _importPrivWallet(privkey, name, password, Coin coin) async {
     EasyLoading.show();
-    // final pubkey = await WalletApi().privToPub(coin.chain!, privkey);
-    // final address = await WalletApi().pubToAddr(coin.chain!, pubkey!);
-    final encPriv = WalletApi().encPriv(privkey, password);
-    final passwordHash = WalletApi().passwordHash(password);
-
-    final wallet = PwalletBean(
-      type: PwalletBean.TYPE_PRIVATE,
+    // final encPriv = encryptData(privkey, password);
+    final wallet = PrivateWallet.fromPrivateKey(
+      privateKey: privkey,
       name: name,
-      password: passwordHash,
-      privKey: encPriv,
+      password: password,
       chain: coin.chain,
-      platform: coin.platform,
     );
-    _saveWallet(wallet, password);
+
+    // final wallet = PwalletBean(
+    //   type: PwalletBean.TYPE_PRIVATE,
+    //   name: name,
+    //   password: passwordHash,
+    //   privKey: encPriv,
+    //   chain: coin.chain,
+    //   platform: coin.platform,
+    // );
+    _saveWallet(wallet);
   }
 
   void _importMnemWallet(mnem, name, password) async {
     EasyLoading.show();
-    final map = WalletApi().encMnem(mnem, password);
-    var mnemHash = map["mnem"];
-    var passwordHash = map["password"];
-    Log.i("mnemHash = $mnemHash,\n passwordHash = $passwordHash");
+    // final encMnem = encryptData(mnem, password);
+    final wallet = MnemonicWallet.fromMnemonic(
+        mnemonic: mnem, name: name, password: password);
 
-    final wallet = PwalletBean(
-      type: PwalletBean.TYPE_MNEM,
-      name: name,
-      password: passwordHash,
-      mnem: mnemHash,
-      mnemType: 0,
-    );
-    await _saveWallet(wallet, password);
+    // final wallet = PwalletBean(
+    //   type: PwalletBean.TYPE_MNEM,
+    //   name: name,
+    //   password: passwordHash,
+    //   mnem: mnemHash,
+    //   mnemType: 0,
+    // );
+    await _saveWallet(wallet);
   }
 
-  Future<void> _saveWallet(wallet, password) async {
-    await saveWallet(wallet, password);
+  Future<void> _saveWallet(wallet) async {
+    store.setWallet(wallet);
     EasyLoading.dismiss();
     if (mounted) {
       Navigator.pushReplacementNamed(context, MyRouter.MAIN_TAB_PAGE);

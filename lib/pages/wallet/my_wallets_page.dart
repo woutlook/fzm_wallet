@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:fwallet/bean/pwallet_bean.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/pages/wallet/wallet_item.dart';
-import 'package:fwallet/provider/p.dart';
-import 'package:fwallet/db/db.dart';
-import 'package:fwallet/widget/widgets.dart';
-
-List<PwalletBean> _wallets = [];
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/models/store.dart';
+import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/pages/wallet/wallet_item.dart';
+import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class MyWalletsPage extends ConsumerStatefulWidget {
   const MyWalletsPage({super.key});
@@ -21,6 +19,7 @@ class MyWalletsPage extends ConsumerStatefulWidget {
 class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
+  final List<Wallet> _wallets = [];
   int _tabIndex = 0;
   @override
   void initState() {
@@ -35,13 +34,14 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
   }
 
   Future<void> _getWallets() async {
-    var db = await DatabaseHelper().database;
-    List list = await db.query("Wallet");
-    var wList = list.map((e) => PwalletBean.fromJson(e)).toList();
+    final list = store.getWalletList();
+    var wList = list.map((e) => store.getWallet(e)).toList();
     setState(() {
       _wallets.clear();
-      _wallets.addAll(wList);
+      final List<Wallet> list = wList.whereType<Wallet>().toList();
+      _wallets.addAll(list);
     });
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   Widget _buildTab(index, title) {
@@ -76,7 +76,10 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(x);
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
       appBar: appBar(context, '',
           title: Row(
@@ -102,9 +105,9 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
   Widget _buildView(index) {
     final wallets = _wallets.where((wallet) {
       if (index == 0) {
-        return wallet.type != PwalletBean.TYPE_KEYADD;
+        return wallet.type != WalletType.address;
       } else {
-        return wallet.type == PwalletBean.TYPE_KEYADD;
+        return wallet.type == WalletType.address;
       }
     }).toList();
     return Container(
@@ -131,7 +134,7 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          wallet.name ?? "",
+                          wallet.name,
                           style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
@@ -150,13 +153,17 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
                     padding: const EdgeInsets.only(top: 20),
                     child: WalletItem(
                       subWidget,
+                      name: wallet.name,
                       () {
                         ref
                             .read((walletProvider).notifier)
                             .updateWallet(wallet);
+                        // ref
+                        // .read(coinsProvider.notifier)
+                        // .updateWalletCoins(wallet);
                         Navigator.pop(context);
                       },
-                      wid: wallet.id!,
+                      // wid: wallet.id!,
                       del: () async {
                         _deleteWallet(wallet, wallets);
                       },
@@ -192,10 +199,12 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
       return;
     }
     final current = ref.watch(walletProvider);
-    if (current.id == wallet.id) {
-      ref.read((walletProvider).notifier).updateWallet(_wallets[0]);
+    if (current.name == wallet.name) {
+      final newWallet = wallets[0];
+      ref.read((walletProvider).notifier).updateWallet(newWallet);
+      // ref.read(coinsProvider.notifier).updateWalletCoins(newWallet);
     }
-    await deleteWallet(wallet, wallets);
+    store.removeWallet(wallet.name);
     await _getWallets();
   }
 }

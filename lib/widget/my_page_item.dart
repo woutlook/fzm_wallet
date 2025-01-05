@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:fwallet/const/app_colors.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
 
 class MyPageItem extends StatefulWidget {
   final String imgUri;

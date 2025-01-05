@@ -16,10 +16,3 @@ subprojects {
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
-
-// android {
-//     compileSdkVersion 32  // 更新为你需要的 SDK 版本
-//     defaultConfig {
-//         targetSdkVersion 32  // 更新为你需要的 SDK 版本
-//     }
-// }

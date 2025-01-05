@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import 'package:fwallet/const/base_data.dart';
-import 'package:fwallet/widget/widgets.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/utils/app_utils.dart';
+import 'package:fzm_wallet/models/const/base_data.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
 
 class DownLoadPage extends StatelessWidget {
   const DownLoadPage({super.key});

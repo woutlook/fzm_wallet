@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/const/my_routers.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class WalletIndexPage extends StatefulWidget {
   const WalletIndexPage({super.key});
@@ -12,6 +13,10 @@ class WalletIndexPage extends StatefulWidget {
 class _WalletIndexPage extends State<WalletIndexPage> {
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -20,11 +25,10 @@ class _WalletIndexPage extends State<WalletIndexPage> {
       ),
       body: Container(
         height: 150,
-        margin: const EdgeInsets.only(top: 400,left: 20,right: 20),
+        margin: const EdgeInsets.only(top: 400, left: 20, right: 20),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: AppColors.gray2b),
+            borderRadius: BorderRadius.circular(12), color: AppColors.gray2b),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -41,8 +45,7 @@ class _WalletIndexPage extends State<WalletIndexPage> {
               children: [
                 ElevatedButton(
                     style: ButtonStyle(
-                        backgroundColor:
-                            WidgetStateProperty.all(Colors.white),
+                        backgroundColor: WidgetStateProperty.all(Colors.white),
                         shape: WidgetStateProperty.all(RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)))),
                     onPressed: () {
@@ -61,9 +64,10 @@ class _WalletIndexPage extends State<WalletIndexPage> {
                     style: ButtonStyle(
                         backgroundColor:
                             WidgetStateProperty.all(AppColors.button),
-                        shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(20))))),
+                        shape: WidgetStateProperty.all(
+                            const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20))))),
                     child: const Text("导入账户"),
                   ),
                 ),

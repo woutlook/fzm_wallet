@@ -1,10 +1,8 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
- package="com.f.wallet.flutter_wallet">
-  
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="flutter_wallet"
+        android:label="fzm_wallet"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"

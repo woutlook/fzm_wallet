@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/utils/app_utils.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 import 'package:install_plugin/install_plugin.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -80,6 +80,10 @@ class _MyPageState extends State<MyPage> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     final langs = AppLocalizations.of(context)!.str_lang;
     final updates = AppLocalizations.of(context)!.str_update;
     final abouts = AppLocalizations.of(context)!.str_about;

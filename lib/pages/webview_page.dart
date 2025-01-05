@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-// import 'package:fwallet/widget/base_appbar.dart';
+// import 'package:fzm_wallet/widget/base_appbar.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 // import 'package:url_launcher/url_launcher.dart';
 
 class WebPage extends StatefulWidget {
@@ -23,6 +23,10 @@ class _WebPageState extends State<WebPage> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     Map<String, dynamic>? arguments =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     url = arguments?["url"];

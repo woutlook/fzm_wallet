@@ -3,64 +3,30 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:fwallet/bean/coin_bean.dart';
-import 'package:fwallet/bean/pwallet_bean.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/pages/wallet/coin_item.dart';
-import 'package:fwallet/pages/wallet/wallet_details_page.dart';
-import 'package:fwallet/provider/p.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/pages/wallet/coin_item.dart';
+import 'package:fzm_wallet/pages/wallet/wallet_details_page.dart';
+import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  // ignore: unused_field
-  final StreamController<List<String>> _controller =
-      StreamController<List<String>>();
-
-  @override
-  void initState() {
-    super.initState();
-    // fetchData();
-  }
-
-  // fetchData() async {
-  //   final db = getDB();
-  //   List<Map> list = await db.query('Wallet');
-  //   // });
-
-  //   var walletId = SP.getWalletId();
-  //   var id = -1;
-  //   if (list.isNotEmpty) {
-  //     id = walletId == -1 ? list[0]["id"] : walletId;
-  //     List<Map> wallets =
-  //         await db.query('Wallet', where: 'id = ?', whereArgs: [id]);
-  //     final wallet = wallets.map((e) => PwalletBean.fromJson(e)).first;
-  //     // ref.read(walletIdProvider.notifier).state = id;
-  //     ref.read(walletProvider.notifier).state = wallet;
-
-  //     final list1 =
-  //         await db.query('Coin', where: 'pwalletId = ?', whereArgs: [id]);
-  //     final coins = list1.map((e) => CoinBean.fromJson(e)).toList();
-  //     ref.read(coinsProvider.notifier).updateCoins(coins);
-  //   }
-  // }
-
-  void _handleScan(barcodeCapture) {
-    // barcodeCapture.startScan();
-  }
+  void _handleScan(barcodeCapture) {}
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(x);
-    final coins = ref.watch(coinsProvider);
-    final filterCoins = coins.where((coin) => coin.added).toList();
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     final wallet = ref.watch(walletProvider);
+    final coins = wallet.coinList;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: appBar(context, wallet.typeString(),
@@ -142,7 +108,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              wallet.name ?? wallet.id.toString(),
+                              wallet.name,
                               style: const TextStyle(
                                   color: Colors.white, fontSize: 22),
                             ),
@@ -169,11 +135,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             Expanded(
               child: ListView.builder(
-                itemCount: filterCoins.length,
+                itemCount: coins.length,
                 itemBuilder: (context, i) => InkWell(
-                  child: CoinItem(filterCoins[i]),
+                  child: CoinItem(coins[i]),
                   onTap: () {
-                    var item = filterCoins[i];
+                    var item = coins[i];
                     Navigator.pushNamed(
                       context,
                       MyRouter.TRANS_PAGE,
@@ -189,36 +155,13 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  // Future<void> gotoScan() async {
-  //   Navigator.of(context).push(
-  //     MaterialPageRoute(
-  //       builder: (context) => const Scan(),
-  //     ),
-  //   );
-  //   // Log.i(result.toString());
-  // }
-
   Future<void> gotoMyWallets() async {
     var result = await Navigator.pushNamed(context, MyRouter.MY_WALLETS_PAGE);
     if (result == null) {
       return;
     }
-    final wallet = result as PwalletBean;
-    ref.read(walletProvider.notifier).updateWallet(wallet);
-    final db = ref.read(dbProvider);
-    final list =
-        await db.query('Coin', where: 'pwalletId = ?', whereArgs: [wallet.id]);
-    final coins = list.map((e) => CoinBean.fromJson(e)).toList();
-    ref.read(coinsProvider.notifier).updateCoins(coins);
+    // final wallet = result as PwalletBean;
+    // ref.read(walletProvider.notifier).updateWallet(wallet);
+    // ref.read(coinsProvider.notifier).updateWalletCoins(wallet);
   }
-
-//或者
-/*  void gotoMyWallets2() {
-    Navigator.pushNamed(context, MyRouter.MY_WALLETS_PAGE).then((result) {
-      var wallet = result as PwalletBean;
-      setState(() {
-        _name = " ${ wallet.name} ${ wallet.id}";
-      });
-    });
-  }*/
 }

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fwallet/const/base_data.dart';
-import 'package:fwallet/main.dart';
-import 'package:fwallet/provider/p.dart';
+import 'package:fzm_wallet/models/const/base_data.dart';
 
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/widget/widgets.dart';
-// import 'package:fwallet/widget/base_appbar.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class LangPage extends StatefulWidget {
   const LangPage({super.key});
@@ -18,7 +15,7 @@ class _LangPageState extends State<LangPage> {
   //切换语言
   changeLang(Locale locale) {
     setState(() {
-      MyApp.setLocale(context, locale);
+      // MyApp.setLocale(context, locale);
     });
   }
 
@@ -34,7 +31,6 @@ class _LangPageState extends State<LangPage> {
                 var locale =
                     const Locale.fromSubtags(languageCode: BaseData.ZH);
                 changeLang(locale);
-                SP.setLangCode(BaseData.ZH);
                 Navigator.pop(context);
               },
               child: Container(
@@ -59,7 +55,6 @@ class _LangPageState extends State<LangPage> {
                 var locale =
                     const Locale.fromSubtags(languageCode: BaseData.EN);
                 changeLang(locale);
-                SP.setLangCode(BaseData.EN);
                 Navigator.pop(context);
               },
               child: Container(

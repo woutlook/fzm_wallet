@@ -3,49 +3,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fwallet/bean/coin_bean.dart';
-import 'package:fwallet/bean/pwallet_bean.dart';
-import 'package:fwallet/pages/my/about.dart';
-import 'package:fwallet/pages/my/contects.dart';
-import 'package:fwallet/pages/wallet_index_page.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-import 'package:fwallet/pages/main_tab_page.dart';
-import 'package:fwallet/pages/my/lang_page.dart';
-import 'package:fwallet/pages/qrscan_page.dart';
-import 'package:fwallet/pages/wallet/backup_mnem_page.dart';
-import 'package:fwallet/pages/wallet/create_mnem_page.dart';
-import 'package:fwallet/pages/wallet/create_wallet_page.dart';
-import 'package:fwallet/pages/wallet/import_wallet_page.dart';
-import 'package:fwallet/pages/wallet/my_wallets_page.dart';
-import 'package:fwallet/pages/wallet/recv_page.dart';
-import 'package:fwallet/pages/wallet/send_page.dart';
-import 'package:fwallet/pages/wallet/tx_page.dart';
-import 'package:fwallet/pages/wallet/wallet_details_page.dart';
-import 'package:fwallet/pages/webview_page.dart';
-import 'package:fwallet/pages/wallet/add_coin_page.dart';
-import 'package:fwallet/pages/wallet/reset_passwd.dart';
-import 'package:fwallet/pages/wallet/change_passwd.dart';
-import 'package:fwallet/pages/wallet/check_mnem.dart';
-import 'package:fwallet/provider/p.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/pages/my/download_page.dart';
+import 'package:fzm_wallet/models/store.dart';
+import 'package:fzm_wallet/pages/my/about.dart';
+import 'package:fzm_wallet/pages/my/contects.dart';
+import 'package:fzm_wallet/pages/my/lang_page.dart';
+import 'package:fzm_wallet/pages/my/download_page.dart';
+import 'package:fzm_wallet/pages/wallet_index_page.dart';
+import 'package:fzm_wallet/pages/wallet/verify_mnem_page.dart';
+import 'package:fzm_wallet/pages/wallet/create_mnem_page.dart';
+import 'package:fzm_wallet/pages/wallet/create_wallet_page.dart';
+import 'package:fzm_wallet/pages/wallet/import_wallet_page.dart';
+import 'package:fzm_wallet/pages/wallet/my_wallets_page.dart';
+import 'package:fzm_wallet/pages/wallet/recv_page.dart';
+import 'package:fzm_wallet/pages/wallet/send_page.dart';
+import 'package:fzm_wallet/pages/wallet/tx_page.dart';
+import 'package:fzm_wallet/pages/wallet/wallet_details_page.dart';
+import 'package:fzm_wallet/pages/wallet/add_coin_page.dart';
+import 'package:fzm_wallet/pages/wallet/reset_passwd.dart';
+import 'package:fzm_wallet/pages/wallet/change_passwd.dart';
+import 'package:fzm_wallet/pages/wallet/check_mnem.dart';
+import 'package:fzm_wallet/pages/webview_page.dart';
+import 'package:fzm_wallet/pages/main_tab_page.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeSharedPreferences();
-  await initDB();
+  await store.storeInit();
   runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
-  static void setLocale(BuildContext context, Locale newLocale) {
-    _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
-    state!.setLocale(newLocale);
-  }
+  // static void setLocale(BuildContext context, Locale newLocale) {
+  //   _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
+  //   state!.setLocale(newLocale);
+  // }
 
   @override
   ConsumerState<MyApp> createState() => _MyAppState();
@@ -53,8 +49,6 @@ class MyApp extends ConsumerStatefulWidget {
 
 class _MyAppState extends ConsumerState<MyApp> {
   Locale _locale = const Locale('en', 'US');
-
-  int _walletCount = 0;
 
   void setLocale(Locale locale) {
     setState(() {
@@ -65,46 +59,19 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
-    final code = SP.getLangCode();
+    final code = store.getLanguage();
     _locale =
         code == 'zh' ? const Locale('zh', 'CN') : const Locale('en', 'US');
-    initWalletAndCoins();
-  }
-
-  void initWalletAndCoins() {
-    getDB().query('Wallet').then((value) {
-      setState(() {
-        _walletCount = value.length;
-        if (_walletCount == 0) {
-          return;
-        }
-        final walletId = SP.getWalletId();
-        final wallets = value.map((e) => PwalletBean.fromJson(e)).toList();
-        PwalletBean wallet;
-        try {
-          wallet = wallets.firstWhere((element) => element.id == walletId);
-        } catch (e) {
-          wallet = wallets[0];
-        }
-        ref.read(walletProvider.notifier).updateWallet(wallet);
-        final list = getDB()
-            .query('Coin', where: 'pwalletId = ?', whereArgs: [walletId]);
-
-        list.then((value) {
-          final coins = value.map((e) => CoinBean.fromJson(e)).toList();
-          ref.read(coinsProvider.notifier).updateCoins(coins);
-        });
-      });
-    });
   }
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final currentWallet = store.getCurrentWallet();
     final home =
-        _walletCount > 0 ? const MainTabPage() : const WalletIndexPage();
+        currentWallet != null ? const MainTabPage() : const WalletIndexPage();
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'FZM Wallet',
       theme: ThemeData(
         primarySwatch: Colors.green,
         primaryColor: Colors.white,
@@ -125,7 +92,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         MyRouter.CREATE_WALLET_PAGE: (context) => const CreateWalletPage(),
         MyRouter.IMPORT_WALLET_PAGE: (context) => const ImportWalletPage(),
         MyRouter.CREATE_MNEM_PAGE: (context) => const CreateMnemPage(),
-        MyRouter.BACKUP_MNEM_PAGE: (context) => const BackUpMnemPage(),
+        MyRouter.VIREFY_MNEM_PAGE: (context) => const VirefyMnemPage(),
         MyRouter.MY_WALLETS_PAGE: (context) => const MyWalletsPage(),
         MyRouter.MAIN_TAB_PAGE: (context) => const MainTabPage(),
         MyRouter.WALLET_DETAILS_PAGE: (context) => const WalletDetailsPage(),
@@ -134,7 +101,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         MyRouter.ADD_TAB_PAGE: (context) => const AddCoinPage(),
         MyRouter.RECV_PAGE: (context) => const RecvPage(),
         MyRouter.SEND_PAGE: (context) => const SendPage(),
-        MyRouter.QR_PAGE: (context) => const MyQRPage(),
+        // MyRouter.QR_PAGE: (context) => const MyQRPage(),
         MyRouter.RESET_PASSWD_PAGE: (context) => ResetPasswordPage(),
         MyRouter.CHANGE_PASSWD_PAGE: (context) => ChangePasswordPage(),
         MyRouter.CHECK_MNEM_PAGE: (context) => CheckMnemPage(),
@@ -224,6 +191,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void init() {
     Future.delayed(const Duration(seconds: 1), () {
+      if (!context.mounted) {
+        return;
+      }
       Navigator.pushReplacementNamed(context, MyRouter.MAIN_TAB_PAGE);
     });
   }

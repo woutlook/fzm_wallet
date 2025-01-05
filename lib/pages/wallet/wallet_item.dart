@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fwallet/provider/p.dart';
+import 'package:fzm_wallet/provider/p.dart';
 
 class WalletItem extends ConsumerWidget {
   final Widget widget;
-  final int wid;
+  final String name;
   final Function() onTap;
   final Function()? del;
 
-  const WalletItem(this.widget, this.onTap,
-      {super.key, required this.wid, this.del});
+  const WalletItem(this.widget, this.onTap, {super.key, this.del, required this.name});
 
   @override
   Widget build(context, ref) {
@@ -34,7 +33,7 @@ class WalletItem extends ConsumerWidget {
               Row(
                 children: [
                   const Spacer(),
-                  wallet.id == wid
+                  wallet.name == name 
                       ? Stack(
                           children: [
                             ClipRect(

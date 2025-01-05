@@ -1,8 +1,9 @@
+/*
 import 'package:flutter/material.dart';
+import 'package:fzm_wallet/models/const/wallet_color.dart';
 import 'package:reorderables/reorderables.dart';
 
-import '../../bean/backup_bean.dart';
-import '../../const/wallet_color.dart';
+import 'package:fzm_wallet/models/wallet.dart';
 
 /// 备份助记词
 class WalletBackupWidget extends StatefulWidget {
@@ -260,3 +261,5 @@ class MyFlowDelegate extends FlowDelegate {
   @override
   bool shouldRepaint(covariant FlowDelegate oldDelegate) => true;
 }
+
+*/

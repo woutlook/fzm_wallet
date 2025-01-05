@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class ResetPasswordPage extends ConsumerWidget {
   ResetPasswordPage({super.key});
@@ -8,7 +8,11 @@ class ResetPasswordPage extends ConsumerWidget {
   final TextEditingController _new2Controller = TextEditingController();
 
   @override
-  Widget build(context, ref) {
+  Widget build(BuildContext context, ref) {
+    return buildLayout(context, child: _build(context, ref));
+  }
+
+  Widget _build(context, ref) {
     return Scaffold(
       appBar: appBar(context, '重置密码'),
       body: SingleChildScrollView(

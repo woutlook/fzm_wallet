@@ -2,12 +2,13 @@ import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:fwallet/api/api.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/utils/app_utils.dart';
-import 'package:fwallet/widget/scan.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/models/store.dart';
+import 'package:fzm_wallet/models/wapi.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
+import 'package:fzm_wallet/widget/scan.dart';
 
-Future<String?> showPasswordDialog(context, passwordHash) async {
+Future<String?> showPasswordDialog(context) async {
   final TextEditingController controller = TextEditingController();
   return showDialog<String?>(
     context: context,
@@ -29,8 +30,9 @@ Future<String?> showPasswordDialog(context, passwordHash) async {
           TextButton(
             onPressed: () async {
               final password = controller.text;
-              final result = WalletApi().checkPasswd(password, passwordHash);
-              if (!result) {
+              final passwordHash = store.getPasswordHash();
+              final hash = hashData(password);
+              if (passwordHash != hash) {
                 toast("密码错误");
                 return;
               }
@@ -181,14 +183,22 @@ AppBar appBar(
     centerTitle: true,
     backgroundColor: bgColor,
     title: Row(
-      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        leading ?? appBarLeading(context, color: leadingColor),
-        const Spacer(),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: leading ?? appBarLeading(context, color: leadingColor),
+          ),
+        ),
         title ?? appBarTitle(titleText, color: titleColor),
-        const Spacer(),
-        trailing ?? Container(),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: trailing ?? Container(),
+          ),
+        ),
       ],
     ),
     actions: [Container()],
@@ -277,7 +287,7 @@ Widget endDrawer(context,
           child: Container(
             height: MediaQuery.of(context).size.height - height,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(1),
+              color: Colors.white.withAlpha(255),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 bottomLeft: Radius.circular(20),
@@ -301,14 +311,14 @@ Widget coinItem(context, coin, {Widget? trailing, Function()? onTap}) {
       decoration: BoxDecoration(boxShadow: [
         BoxShadow(
           //withOpacity不透明度
-          color: Colors.black.withOpacity(0.1),
+          color: Colors.black.withAlpha(25),
           //模糊半径
           blurRadius: 5,
           //扩散半径
           spreadRadius: 2,
         ),
         BoxShadow(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withAlpha(25),
           blurRadius: 5,
           spreadRadius: 2,
         ),
@@ -343,6 +353,39 @@ Widget coinItem(context, coin, {Widget? trailing, Function()? onTap}) {
           const Spacer(),
           trailing ?? Container(),
         ],
+      ),
+    ),
+  );
+}
+
+const double myMaxWidth = 800.0;
+const double myMaxHeight = 1000.0;
+Widget buildLayout(context,
+    {required Widget child, double? maxWidth, double? maxHeight}) {
+  return Container(
+    color: Theme.of(context).colorScheme.surfaceBright,
+    child: Center(
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: maxWidth ?? myMaxWidth,
+          maxHeight: maxHeight ?? myMaxHeight,
+        ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.shadow,
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          borderRadius: const BorderRadius.all(Radius.circular(8)),
+        ),
+        // child: child,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: child,
+        ),
       ),
     ),
   );

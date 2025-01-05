@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:fwallet/bean/pwallet_bean.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/ext/string_ext.dart';
-import 'package:fwallet/const/wallet_color.dart';
-import 'package:fwallet/api/api.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/ext/string_ext.dart';
+import 'package:fzm_wallet/models/const/wallet_color.dart';
+import 'package:fzm_wallet/models/wapi.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class CreateMnemPage extends StatefulWidget {
   const CreateMnemPage({super.key});
@@ -15,16 +14,15 @@ class CreateMnemPage extends StatefulWidget {
   State<CreateMnemPage> createState() => _CreateMnemPageState();
 }
 
-var _chineseMnem = "";
-var _englishMnem = "";
-
 class _CreateMnemPageState extends State<CreateMnemPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   var _tabPosition = 0;
+  late String _chineseMnem = "";
+  late String _englishMnem = "";
 
   void createMnem(int type) async {
-    final value = WalletApi().createMnem(type);
+    final value = walletApi.createMnem(type);
     setState(() {
       if (type == 0) {
         _englishMnem = value;
@@ -53,6 +51,10 @@ class _CreateMnemPageState extends State<CreateMnemPage>
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     Map<String, dynamic>? arguments =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     String? name = arguments?["name"];
@@ -60,25 +62,28 @@ class _CreateMnemPageState extends State<CreateMnemPage>
 
     return Scaffold(
       appBar: appBar(context, '创建助记词'),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          height: MediaQuery.of(context).size.height - 100,
-          color: AppColors.gray2b,
-          child: Column(
-            children: [
-              _buildMenmCart(),
-              const Padding(
-                padding: EdgeInsets.only(top: 35, left: 16, right: 16),
-                child: Text(
-                  "提示：请勿直接截图保存！如果有人获取你的助记词将直接获取您的资产！\n\n正确做法：\n\n方式一：使用另一离线设备，拍照保存。\n方式二：正确抄写助记词，存放在安全的地方。\n\n点击［开始备份］后，需要对你记住的助记词进行校验。",
-                  style: TextStyle(color: Colors.white, fontSize: 13),
-                ),
+      body: Container(
+        padding: const EdgeInsets.all(20),
+        color: AppColors.gray2b,
+        child: Column(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildMenmCart(),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 35, left: 16, right: 16),
+                    child: Text(
+                      "提示：请勿直接截图保存！如果有人获取你的助记词将直接获取您的资产！\n\n正确做法：\n\n方式一：使用另一离线设备，拍照保存。\n方式二：正确抄写助记词，存放在安全的地方。\n\n点击［开始备份］后，需要对你记住的助记词进行校验。",
+                      style: TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                ],
               ),
-              const Spacer(),
-              _buildButtons(name, password),
-            ],
-          ),
+            ),
+            const Spacer(),
+            _buildButtons(name, password),
+          ],
         ),
       ),
     );
@@ -161,19 +166,12 @@ class _CreateMnemPageState extends State<CreateMnemPage>
           width: 120,
         ),
         blackButton(
-          '开始备份',
+          '验证助记词',
           () {
             var mnem = _tabPosition == 0 ? _chineseMnem : _englishMnem;
-            final wallet = PwalletBean(
-              name: name,
-              password: password,
-              mnem: mnem,
-              mnemType: _tabPosition == 0 ? 1 : 0,
-            );
 
-            Navigator.pushNamed(context, MyRouter.BACKUP_MNEM_PAGE, arguments: {
-              'wallet': wallet,
-            });
+            Navigator.pushNamed(context, MyRouter.VIREFY_MNEM_PAGE,
+                arguments: {'mnem': mnem, 'name': name, 'password': password});
           },
           width: 120,
         ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fwallet/pages/ex_page.dart';
-import 'package:fwallet/pages/home_page.dart';
-import 'package:fwallet/pages/my_page.dart';
+import 'package:fzm_wallet/pages/ex_page.dart';
+import 'package:fzm_wallet/pages/home_page.dart';
+import 'package:fzm_wallet/pages/my_page.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class MainTabPage extends StatefulWidget {
   const MainTabPage({super.key});
@@ -46,6 +47,10 @@ class _MainTabPageState extends State<MainTabPage> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: currentIndex,

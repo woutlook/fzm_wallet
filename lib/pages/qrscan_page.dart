@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 class MyQRPage extends StatefulWidget {
@@ -29,6 +30,10 @@ class _MyQRViewState extends State<MyQRPage> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

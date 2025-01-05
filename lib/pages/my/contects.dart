@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fwallet/bean/coin_bean.dart';
-import 'package:fwallet/bean/contects.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/provider/p.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/models/coin.dart';
+
+import 'package:fzm_wallet/models/contact.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/models/store.dart';
+import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class MyContactsPage extends ConsumerStatefulWidget {
   const MyContactsPage({super.key});
@@ -16,7 +18,6 @@ class MyContactsPage extends ConsumerStatefulWidget {
 
 class _MyContactsPageState extends ConsumerState<MyContactsPage> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchText = '';
 
   @override
   void dispose() {
@@ -24,9 +25,53 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
     super.dispose();
   }
 
+  Widget _buildBody(context) {
+    final wallet = ref.watch(walletProvider);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          TextField(
+            onChanged: (value) {
+              setState(() {
+              });
+            },
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: _buildContectsList(wallet),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContectsList(wallet) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final contectsList = ref.watch(contectsProvider);
+      final wallet = ref.watch(walletProvider);
+      final coins = wallet.coinList;
+      return ListView.builder(
+        shrinkWrap: true,
+        itemCount: contectsList.length,
+        itemBuilder: (context, index) {
+          final contects = contectsList[index];
+          return _buildContectsItem(context, contects, coins, constraints);
+        },
+      );
+    });
+  }
+
   @override
   Widget build(context) {
-    final wallet = ref.watch(walletProvider);
     return Scaffold(
       appBar: appBar(
         context,
@@ -36,81 +81,19 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
             await Navigator.push(context, MaterialPageRoute(builder: (context) {
               return const EditContractsPage();
             }));
-            setState(() {
-              // ignore: unused_result
-              // ref.refresh(contectsProvider(wallet.id!));
-            });
+            setState(() {});
           },
           icon: const Icon(Icons.add),
         ),
       ),
-      body: Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            TextField(
-              onChanged: (value) {
-                setState(() {
-                  _searchText = value;
-                });
-              },
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final contectsList = ref.watch(contectsProvider(wallet.id!));
-                  final coins = ref.watch(coinsProvider);
-                  return contectsList.when(
-                    data: (list) {
-                      final clist = list
-                          .where((element) =>
-                              element.name.contains(_searchText) ||
-                              element.phoneNum.contains(_searchText))
-                          .toList();
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: clist.length,
-                        itemBuilder: (context, index) {
-                          return _buildContectsItem(
-                              context, index, clist, coins, constraints);
-                        },
-                      );
-                    },
-                    loading: () {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    },
-                    error: (error, stackTrace) {
-                      return Center(
-                        child: Text('Error: $error'),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: _buildBody(context),
     );
   }
 
-  Widget _buildContectsItem(context, index, clist, coins, constraints) {
-    final contects = clist[index];
-    final coinIconList = contects.addressList?.map((e) {
+  Widget _buildContectsItem(context, contect, coins, constraints) {
+    final coinIconList = contect.addressList?.map((e) {
       final url =
-          coins.firstWhere((coin) => coin.netId.toString() == e.coinId).icon ??
-              '';
+          coins.firstWhere((coin) => coin.id.toString() == e.coinId).icon ?? '';
       try {
         return Image.network(
           url,
@@ -124,18 +107,21 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 10),
       child: InkWell(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return EditContractsPage(
-                title: '联系人详情',
-                isEdit: true,
-                contects: contects,
-              );
-            },
-          ),
-        ),
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return EditContractsPage(
+                  title: '联系人详情',
+                  isEdit: true,
+                  contect: contect,
+                );
+              },
+            ),
+          );
+          setState(() {});
+        },
         child: Card(
           color: Colors.white,
           shadowColor: Colors.grey,
@@ -159,7 +145,7 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
                     const Icon(Icons.person, color: Colors.white),
                     const SizedBox(width: 5),
                     Text(
-                      contects.name,
+                      contect.name,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -170,10 +156,21 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
                         color: Colors.white),
                     const SizedBox(width: 5),
                     Text(
-                      contects.phoneNum,
+                      contect.phoneNum,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () {
+                        store.removeContact(contect.name);
+                        setState(() {});
+                      },
+                      icon: const Icon(
+                        Icons.delete,
+                        color: Colors.red,
                       ),
                     ),
                   ]),
@@ -181,11 +178,11 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.token_outlined,
-                      color: Colors.blue,
-                    ),
-                    const SizedBox(width: 10),
+                    // const Icon(
+                    //   Icons.token_outlined,
+                    //   color: Colors.blue,
+                    // ),
+                    // const SizedBox(width: 10),
                     SizedBox(
                       width: constraints.maxWidth - 70,
                       child: Wrap(
@@ -205,14 +202,19 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
       ),
     );
   }
+
+  // void _handleDeleteContects(contects) {
+  //   deleteContects(contects: contects);
+  //   ref.invalidate(contectsProvider(ref.read(walletProvider).id!));
+  // }
 }
 
 class EditContractsPage extends ConsumerStatefulWidget {
   final bool isEdit;
   final String title;
-  final Contects? contects;
+  final Contact? contect;
   const EditContractsPage(
-      {super.key, this.isEdit = false, this.title = '添加联系人', this.contects});
+      {super.key, this.isEdit = false, this.title = '添加联系人', this.contect});
 
   @override
   ConsumerState createState() => _EditContractsPageState();
@@ -222,19 +224,21 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
   final TextEditingController _nickNameController = TextEditingController();
   final TextEditingController _phoneNumController = TextEditingController();
   final List<TextEditingController> _addressControllerList = [];
-  Contects? _contects;
-  CoinBean? _coin;
+  Contact? _contect;
+  Coin? _coin;
   int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _contects = widget.contects;
-    if (_contects != null) {
-      _nickNameController.text = _contects!.name;
-      _phoneNumController.text = _contects!.phoneNum;
+    _contect = widget.contect;
+    if (_contect != null) {
+      _nickNameController.text = _contect!.name;
+      _phoneNumController.text = _contect!.phoneNum;
       _addressControllerList.addAll(
-        _contects?.addressList?.map((e) => TextEditingController()).toList() ??
+        _contect?.addressList
+                ?.map((e) => TextEditingController(text: e.address))
+                .toList() ??
             [],
       );
     }
@@ -265,43 +269,51 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
     );
   }
 
-  Future<void> _handleSaveContects() async {
+  Future<bool> _handleSaveContects() async {
     if (_nickNameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请输入联系人名称')),
       );
-      return;
+      return false;
     }
     if (_phoneNumController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请输入手机号码')),
       );
-      return;
+      return false;
     }
-    _contects ??= Contects();
-    _contects!.name = _nickNameController.text;
-    _contects!.phoneNum = _phoneNumController.text;
-    _contects!.addressList?.map((e) {
-      e.address =
-          _addressControllerList[_contects!.addressList!.indexOf(e)].text;
-    });
-    final wallet = ref.watch(walletProvider);
-    await saveContects(contects: _contects!, walletId: wallet.id!);
+    _contect ??= Contact();
+    _contect!.name = _nickNameController.text;
+    _contect!.phoneNum = _phoneNumController.text;
+    for (var i = 0; i < _addressControllerList.length; i++) {
+      if (_addressControllerList[i].text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('请输入地址')),
+        );
+        return false;
+      }
+      _contect!.addressList![i].address = _addressControllerList[i].text;
+    }
+    // final wallet = ref.read(walletProvider);
+    // await updateContects(contects: _contect!, walletId: wallet.id!);
+    // ref.invalidate(contectsProvider(wallet.id!));
+    // ref.read(contectsProvider.notifier).state = _contect;
+    return true;
   }
 
   @override
   Widget build(context) {
-    final coins = ref.watch(coinsProvider);
-    final filterCoins = coins.where((coin) => coin.added).toList();
+    final wallet = ref.watch(walletProvider);
+    final filterCoins = wallet.coinList;
     final coinItems = filterCoins.map((e) {
       return coinItem(
         context,
         e,
         onTap: () {
           setState(() {
-            _contects ??= Contects();
-            _contects!.addAddress(
-                ContactsAddress(coinId: e.netId.toString(), address: ''));
+            _contect ??= Contact();
+            _contect!.addAddress(
+                ContactsAddress(coinId: e.id.toString(), address: ''));
             _addressControllerList.add(TextEditingController());
           });
           Navigator.pop(context);
@@ -316,21 +328,23 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
         trailing: TextButton(
           onPressed: () async {
             if (widget.isEdit) {
-              final len = await Navigator.push(context,
+              await Navigator.push(context,
                   MaterialPageRoute(builder: (context) {
                 return EditContractsPage(
-                    title: '编辑联系人', isEdit: false, contects: _contects);
+                    title: '编辑联系人', isEdit: false, contect: _contect);
               }));
               setState(() {
                 _addressControllerList.clear();
-                for (var i = 0; i < len; i++) {
-                  _addressControllerList.add(TextEditingController());
+                final length = _contect?.addressList?.length ?? 0;
+                for (var i = 0; i < length; i++) {
+                  _addressControllerList.add(TextEditingController(
+                      text: _contect?.addressList?[i].address));
                 }
               });
             } else {
-              await _handleSaveContects();
-              if (context.mounted) {
-                Navigator.pop(context, _contects?.addressList?.length ?? 0);
+              final result = await _handleSaveContects();
+              if (result && context.mounted) {
+                Navigator.pop(context);
               }
             }
           },
@@ -339,73 +353,81 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
       ),
       endDrawer:
           endDrawer(context, child: Column(children: coinItems), top: 100),
-      body: Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCard(
-              Column(
+      body: InkWell(
+        onTap: () {
+          FocusScope.of(context).requestFocus(FocusNode());
+        },
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCard(
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Text('联系人'),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: normalInput(
+                            _nickNameController,
+                            '小于16个字符',
+                            disable: widget.isEdit,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text('手机号'),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: normalInput(
+                            _phoneNumController,
+                            '手机号码',
+                            keyboardType: TextInputType.phone,
+                            isNumber: true,
+                            disable: widget.isEdit,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      const Text('联系人'),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: normalInput(
-                          _nickNameController,
-                          '小于16个字符',
-                          disable: widget.isEdit,
-                        ),
-                      ),
-                    ],
+                  Container(
+                    width: 5,
+                    height: 20,
+                    color: Colors.blue,
                   ),
-                  Row(
-                    children: [
-                      const Text('手机号'),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: normalInput(
-                          _phoneNumController,
-                          '手机号码',
-                          keyboardType: TextInputType.phone,
-                          isNumber: true,
-                          disable: widget.isEdit,
-                        ),
-                      ),
-                    ],
-                  ),
+                  const SizedBox(width: 4),
+                  const Text('地址'),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Container(
-                  width: 5,
-                  height: 20,
-                  color: Colors.blue,
-                ),
-                const SizedBox(width: 4),
-                const Text('地址'),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: _buildAddressList(context, filterCoins),
-            ),
-            const SizedBox(height: 20),
-            LayoutBuilder(builder: (context, filterCoins) {
-              return widget.isEdit
-                  ? blackButton('去转账', () {
-                      Navigator.pushNamed(context, MyRouter.TRANS_PAGE,
-                          arguments: {'coin': _coin, 'contects': _contects});
-                    })
-                  : blueButton('添加地址', () {
-                      Scaffold.of(context).openEndDrawer();
-                    });
-            }),
-          ],
+              const SizedBox(height: 10),
+              Expanded(
+                child: _buildAddressList(context, filterCoins),
+              ),
+              const SizedBox(height: 20),
+              LayoutBuilder(builder: (context, filterCoins) {
+                return widget.isEdit
+                    ? blackButton('去转账', () {
+                        final address =
+                            _contect?.addressList?[_selectedIndex].address ??
+                                "";
+                        Navigator.pushNamed(context, MyRouter.SEND_PAGE,
+                            arguments: {'coin': _coin, 'address': address});
+                      })
+                    : blueButton('添加地址', () {
+                        Scaffold.of(context).openEndDrawer();
+                      });
+              }),
+            ],
+          ),
         ),
       ),
     );
@@ -413,14 +435,15 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
 
   Widget _buildAddressList(context, coins) {
     return ListView.builder(
-      itemCount: _contects?.addressList?.length ?? 0,
+      itemCount: _contect?.addressList?.length ?? 0,
       itemBuilder: (context, index) {
-        CoinBean? coin;
-        if (_contects?.addressList?.isNotEmpty ?? false) {
+        Coin? coin;
+        if (_contect?.addressList?.isNotEmpty ?? false) {
           coin = coins.firstWhere((e) =>
-              e.netId.toString() ==
-              (_contects?.addressList?[index].coinId ?? "90"));
+              e.id.toString() ==
+              (_contect?.addressList?[index].coinId ?? "90"));
         }
+        _coin = _coin ?? coin;
         return Padding(
           padding: const EdgeInsets.only(top: 10, bottom: 10),
           child: InkWell(
@@ -458,17 +481,18 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
                         !widget.isEdit
                             ? Row(
                                 children: [
-                                  scanButton(context, size: 12, (cap) {
+                                  scanButton(context, size: 12,
+                                      (barcodeCapture) {
                                     setState(() {
-                                      // widget.contects!.addressList[index]
-                                      //     .address = cap.barcodes.first.code.name;
+                                      // _addressControllerList[index].text =
+                                      //     getScanResult(barcodeCapture) ?? '';
                                     });
                                   }),
                                   IconButton(
                                     onPressed: () {
                                       setState(() {
                                         _addressControllerList.removeAt(index);
-                                        _contects!.addressList!.removeAt(index);
+                                        _contect!.addressList!.removeAt(index);
                                       });
                                     },
                                     icon: const Icon(
@@ -481,8 +505,11 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
                               )
                             : IconButton(
                                 onPressed: () {
+                                  final wallet = ref.read(walletProvider);
+                                  final address = wallet.getAccountAddress(
+                                      chain: _coin?.chain ?? '');
                                   Clipboard.setData(
-                                    ClipboardData(text: coin?.address ?? ""),
+                                    ClipboardData(text: address),
                                   );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(

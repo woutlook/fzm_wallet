@@ -13,11 +13,7 @@ class _ScanState extends State<Scan> {
   @override
   Widget build(BuildContext context) {
     return AiBarcodeScanner(
-      // onScan: (String value) {
-      //   debugPrint(value);
-      // },
       onDetect: (BarcodeCapture barcodeCapture) {
-        // debugPrint("$barcodeCapture");
         widget.onScan(barcodeCapture);
       },
     );

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fzm_wallet/models/store.dart';
+import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/models/wapi.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import 'package:fwallet/api/api.dart';
-import 'package:fwallet/bean/pwallet_bean.dart';
-import 'package:fwallet/const/my_routers.dart';
-import 'package:fwallet/widget/widgets.dart';
-import 'package:fwallet/utils/app_utils.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/db/db.dart';
-import 'package:fwallet/provider/p.dart';
-import 'package:fwallet/widget/my_page_item.dart';
+import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
+import 'package:fzm_wallet/widget/my_page_item.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class WalletDetailsPage extends ConsumerStatefulWidget {
   const WalletDetailsPage({super.key});
@@ -30,13 +30,16 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     final noPasswordPay = ref.watch(noPassworkPayProvider);
     final wallet = ref.watch(walletProvider);
-    if (_controller.text.isEmpty && wallet.name != null) {
-      _controller.text = wallet.name ?? "";
+    if (_controller.text.isEmpty) {
+      _controller.text = wallet.name;
     }
-    final coins = ref.watch(coinsProvider);
-    final showCoins = coins.where((element) => element.added).toList();
+    final showCoins = wallet.coinList;
     return Scaffold(
       appBar: appBar(context, '账户设置'),
       body: SingleChildScrollView(
@@ -88,11 +91,11 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                       child: Switch(
                         value: noPasswordPay,
                         onChanged: (value) async {
-                          final ok = await wallet.unlock(context);
-                          if (!ok) {
-                            return;
-                          }
-                          wallet.nopasswordPay = value;
+                          // final ok = await wallet.unlock(context);
+                          // if (!ok) {
+                          //   return;
+                          // }
+                          // wallet.nopasswordPay = value;
                         },
                       ),
                     ),
@@ -103,12 +106,11 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                 "images/icon_share.png",
                 "导出助记词",
                 onTap: () async {
-                  if (wallet.type != PwalletBean.TYPE_MNEM) {
+                  if (wallet.type != WalletType.mnemonic) {
                     toast("只有助记词账户才能导出助记词");
                     return;
                   }
-                  final password =
-                      await _showPasswordDialog(context, wallet.password);
+                  final password = await _showPasswordDialog(context);
                   if (password == null || password.isEmpty) {
                     return;
                   }
@@ -122,8 +124,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                 "images/icon_share.png",
                 "导出私钥",
                 onTap: () async {
-                  final password =
-                      await _showPasswordDialog(context, wallet.password);
+                  final password = await _showPasswordDialog(context);
                   if (password == null || password.isEmpty) {
                     return;
                   }
@@ -149,8 +150,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                 "images/icon_share.png",
                 "绑定找回钱包",
                 onTap: () async {
-                  final password =
-                      await _showPasswordDialog(context, wallet.password);
+                  final password = await _showPasswordDialog(context);
                   if (password == null || password.isEmpty) {
                     return;
                   }
@@ -274,8 +274,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
     );
   }
 
-  void _showKeyDialog(context, coin,
-      {String? password, PwalletBean? wallet}) async {
+  void _showKeyDialog(context, coin, {String? password, Wallet? wallet}) async {
     final keyTitle = password == null || password.isEmpty ? '公钥' : '私钥';
     String? key = coin.pubkey;
     if (password != null && password.isNotEmpty) {
@@ -367,17 +366,14 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
     );
   }
 
-  _updateWalletName(wallet, newName) async {
+  _updateWalletName(Wallet wallet, newName) async {
+    final old = wallet.name;
     wallet.name = newName;
-    var db = await DatabaseHelper().database;
-    var re = await db.update('Wallet', wallet.toJson(),
-        where: 'id = ?', whereArgs: [wallet.id]);
-
-    Log.i("re ===  $re");
+    store.updateWallet(old, wallet);
   }
 
-  Future<String?> _showPasswordDialog(context, passwordHash) async {
-    return await showPasswordDialog(context, passwordHash);
+  Future<String?> _showPasswordDialog(context) async {
+    return await showPasswordDialog(context);
   }
 
   Future<String?> _showCustomDialog(
@@ -457,7 +453,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
   }
 
   Future<void> _showMnemDialog(context, wallet, password) async {
-    final mnem = WalletApi().decMnem(wallet.mnem, password);
+    final mnem = decryptData(wallet.encryptedMnemonic, password);
     return showDialog<void>(
         context: context,
         builder: (BuildContext context) {

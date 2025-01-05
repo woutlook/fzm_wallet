@@ -1,4 +1,4 @@
-import 'package:fwallet/utils/app_utils.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
 
 extension StringExt on String {
   List<String> mnemList() {

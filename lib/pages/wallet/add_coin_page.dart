@@ -2,15 +2,15 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:fwallet/api/fzm_http.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:fzm_wallet/models/chain33_http.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:fwallet/bean/coin_bean.dart';
-import 'package:fwallet/bean/tab_coin.dart';
-import 'package:fwallet/const/app_colors.dart';
-import 'package:fwallet/db/db.dart';
-import 'package:fwallet/provider/p.dart';
+import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/models/tab_coin.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class AddCoinPage extends ConsumerStatefulWidget {
   const AddCoinPage({super.key});
@@ -21,7 +21,6 @@ class AddCoinPage extends ConsumerStatefulWidget {
 
 class _AddCoinPageState extends ConsumerState<AddCoinPage>
     with TickerProviderStateMixin {
-  late Database _db;
   late List<TabCategory> _tabs = [];
   List<bool> _isSelected = [];
 
@@ -46,7 +45,6 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
   }
 
   fetchData() async {
-    _db = await DatabaseHelper().database;
     final resp = await Http.of().get(RECOMMEND_COIN);
     final tabs = (resp.data as List)
         .map((e) => TabCategory.fromJson(e as Map<String, dynamic>))
@@ -60,6 +58,10 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     List<TextButton> ts = _tabs
         .map(
           (e) => TextButton(
@@ -79,7 +81,8 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
           ),
         )
         .toList();
-    final coins = ref.watch(coinsProvider);
+    final wallet = ref.watch(walletProvider);
+    final coins = wallet.coinList;
 
     return Scaffold(
       appBar: AppBar(
@@ -126,7 +129,6 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
                 context,
                 MaterialPageRoute(
                   builder: (context) => _SearchCoins(
-                    db: _db,
                     coins: coins,
                   ),
                 ),
@@ -165,7 +167,7 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  ..._buildTabViews(coins),
+                  ..._buildTabViews(coins, wallet),
                 ],
               ),
             ),
@@ -175,14 +177,14 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
     );
   }
 
-  List<Widget> _buildTabViews(coins) {
+  List<Widget> _buildTabViews(coins, wallet) {
     final view0 = ListView.builder(
       itemCount: coins.length,
       itemBuilder: (context, index) {
         final coin = coins[index];
         return _AddCoinItem(coin, () {
-          setCoin(ref, _db, coin);
-        });
+          setCoin(ref, coin);
+        }, wallet);
       },
     );
 
@@ -192,14 +194,14 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
         itemBuilder: (context, index) {
           final coin = e.items[index];
           coins.map((e) {
-            if (coin.netId == e.netId) {
-              coin.added = e.added;
+            if (coin.id == e.id) {
+              wallet.addCoin(coin);
             }
           }).toList();
 
           return _AddCoinItem(coin, () {
-            setCoin(ref, _db, coin);
-          });
+            setCoin(ref, coin);
+          }, wallet);
         },
       );
     }).toList();
@@ -208,9 +210,9 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
   }
 }
 
-void setCoin(ref, db, coin) {
-  final coins = ref.watch(coinsProvider);
+void setCoin(ref, coin) {
   final wallet = ref.watch(walletProvider);
+  final coins = wallet.coinList;
   coin.pwalletId = wallet.id;
 
   if (coin.address == null) {
@@ -232,10 +234,10 @@ void setCoin(ref, db, coin) {
   //   }
   // }
 
-  final index = coins.indexWhere((e) => e.netId == coin.netId);
+  final index = coins.indexWhere((e) => e.id == coin.id);
   if (index != -1) {
     for (var hcoin in coins) {
-      if (hcoin.netId == coin.netId) {
+      if (hcoin.id == coin.id) {
         hcoin.added = coin.added;
         hcoin.contract = coin.contract;
         break;
@@ -244,15 +246,16 @@ void setCoin(ref, db, coin) {
   } else {
     coins.add(coin);
   }
-  updateCoin(db, coin);
-  ref.read(coinsProvider.notifier).updateCoins(coins);
+  // updateCoin(coin);
+  // ref.read(coinsProvider.notifier).updateWalletCoins(wallet);
 }
 
 class _AddCoinItem extends StatefulWidget {
-  final CoinBean coin;
+  final Coin coin;
   final Function() callback;
+  final Wallet wallet;
 
-  const _AddCoinItem(this.coin, this.callback);
+  const _AddCoinItem(this.coin, this.callback, this.wallet);
 
   @override
   _AddCoinItemState createState() => _AddCoinItemState();
@@ -264,24 +267,29 @@ class _AddCoinItemState extends State<_AddCoinItem> {
   @override
   void initState() {
     super.initState();
-    _added = widget.coin.added;
+    final id = widget.coin.id;
+    _added = widget.wallet.hasCoin(id);
   }
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Container(
       height: 70,
       decoration: BoxDecoration(boxShadow: [
         BoxShadow(
           //withOpacity不透明度
-          color: Colors.black.withOpacity(0.1),
+          color: Colors.black.withAlpha(25),
           //模糊半径
           blurRadius: 5,
           //扩散半径
           spreadRadius: 2,
         ),
         BoxShadow(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withAlpha(25),
           blurRadius: 5,
           spreadRadius: 2,
         ),
@@ -309,7 +317,7 @@ class _AddCoinItemState extends State<_AddCoinItem> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.coin.name ?? "",
+                  widget.coin.name,
                   style: TextStyle(
                       color: AppColors.gray33,
                       fontSize: 16,
@@ -326,7 +334,6 @@ class _AddCoinItemState extends State<_AddCoinItem> {
           IconButton(
             icon: Icon(!_added ? Icons.add_outlined : Icons.remove_outlined),
             onPressed: () {
-              widget.coin.added = !_added;
               setState(() {
                 _added = !_added;
               });
@@ -340,16 +347,15 @@ class _AddCoinItemState extends State<_AddCoinItem> {
 }
 
 class _SearchCoins extends ConsumerStatefulWidget {
-  final Database db;
-  final List<CoinBean> coins;
-  const _SearchCoins({required this.db, required this.coins});
+  final List<Coin> coins;
+  const _SearchCoins({required this.coins});
 
   @override
   _SearchCoinsState createState() => _SearchCoinsState();
 }
 
 class _SearchCoinsState extends ConsumerState<_SearchCoins> {
-  List<CoinBean> _coins = [];
+  List<Coin> _coins = [];
   final ScrollController _scrollController = ScrollController();
 
   bool _isLoading = false;
@@ -359,6 +365,7 @@ class _SearchCoinsState extends ConsumerState<_SearchCoins> {
   @override
   void initState() {
     super.initState();
+    _loadMoreData();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
               _scrollController.position.maxScrollExtent &&
@@ -395,15 +402,14 @@ class _SearchCoinsState extends ConsumerState<_SearchCoins> {
       platform: "",
     );
 
-    final resp =
-        await Http.of().post(SEARCH_COIN, data: searchArgs.toJson());
+    final resp = await Http.of().post(SEARCH_COIN, data: searchArgs.toJson());
     final list = (resp.data as List)
-        .map((e) => CoinBean.fromJson(e as Map<String, dynamic>))
+        .map((e) => Coin.fromJson(e as Map<String, dynamic>))
         .toList();
     setState(() {
       final coins = list.map((e) {
-        e.added =
-            widget.coins.any((element) => element.id == e.id && element.added);
+        // e.added =
+        //     widget.coins.any((element) => element.id == e.id && element.added);
         return e;
       }).toList();
       _coins.addAll(coins);
@@ -413,6 +419,10 @@ class _SearchCoinsState extends ConsumerState<_SearchCoins> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -466,9 +476,10 @@ class _SearchCoinsState extends ConsumerState<_SearchCoins> {
               itemCount: _coins.length,
               itemBuilder: (context, index) {
                 final coin = _coins[index];
+                final wallet = ref.watch(walletProvider);
                 return _AddCoinItem(coin, () {
-                  setCoin(ref, widget.db, coin);
-                });
+                  setCoin(ref, coin);
+                }, wallet);
               },
             ),
           ),

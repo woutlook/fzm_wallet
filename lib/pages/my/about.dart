@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fwallet/widget/widgets.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});

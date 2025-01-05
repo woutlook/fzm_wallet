@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fwallet/bean/ex_bean.dart';
-import 'package:fwallet/const/app_colors.dart';
+import 'package:fzm_wallet/models/ex_bean.dart';
+import 'package:fzm_wallet/models/const/app_colors.dart';
+import 'package:fzm_wallet/widget/widgets.dart';
 
 class ExItem extends StatelessWidget {
   final Apps app;
@@ -9,6 +10,10 @@ class ExItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
       child: Row(
