@@ -35,9 +35,6 @@ class _TransPageState extends ConsumerState<TransPage>
   }
 
   Widget _build(BuildContext context) {
-    // Map<String, dynamic>? arguments =
-    //     ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    // var coin = arguments?["coin"] as Coin;
     final coin = ref.watch(coinProvider);
     final title = '${coin!.name}(${coin.nickname})';
     final balancer = ref.watch(balanceProvider(coin));
@@ -106,11 +103,12 @@ class _TransPageState extends ConsumerState<TransPage>
               Row(
                 children: [
                   Text(
-                    address.length > 34
-                        ? '${address.substring(0, 18)}...${address.substring(address.length - 16)}'
-                        : address,
+                    formatAddress(address, start: 18, end: 16),
                     style: const TextStyle(
                         fontFamily: 'monospace', color: Colors.blueGrey),
+                  ),
+                  const SizedBox(
+                    width: 10,
                   ),
                   IconButton(
                     icon: const Icon(Icons.copy),

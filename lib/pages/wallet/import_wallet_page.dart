@@ -4,7 +4,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:fzm_wallet/models/coin.dart';
 import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
-import 'package:fzm_wallet/models/const/my_routers.dart';
 import 'package:fzm_wallet/models/wallet.dart';
 import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
@@ -257,24 +256,30 @@ class _ImportWalletPageState extends State<ImportWalletPage>
         return;
       }
     }
-    final password = await showPasswordDialog(context);
-    if (password == null) {
-      return;
-    }
-    if (index == 0) {
-      final mnemS = _mnemController.text;
-      final mnem = formatString(mnemS);
-      _importMnemWallet(mnem, name, password);
-    } else if (index == 1) {
-      final privkey = _privOrAddrController.text;
+    if (index < 2) {
+      final password = await showPasswordDialog(context);
+      if (password == null) {
+        return;
+      }
+      if (index == 0) {
+        final mnemS = _mnemController.text;
+        final mnem = formatString(mnemS);
+        _importMnemWallet(mnem, name, password);
+      } else if (index == 1) {
+        final privkey = _privOrAddrController.text.trim();
+        if (_selectedCoin == null) {
+          toast("请选择主链");
+          return;
+        }
+        _importPrivWallet(privkey, name, password, _selectedCoin!);
+      }
+    } else if (index == 2) {
+      final address = _privOrAddrController.text.trim();
       if (_selectedCoin == null) {
         toast("请选择主链");
         return;
       }
-      _importPrivWallet(privkey, name, password, _selectedCoin!);
-    } else if (index == 2) {
-      // _importFindWallet(mnem, name, password);
-      toast("暂未开放");
+      _importAddressWallet(address, name, _selectedCoin!);
     }
   }
 
@@ -285,30 +290,38 @@ class _ImportWalletPageState extends State<ImportWalletPage>
 
   void _importPrivWallet(privkey, name, password, Coin coin) async {
     EasyLoading.show();
-    final wallet = PrivateWallet.fromPrivateKey(
+    final wallet = await PrivateWallet.fromPrivateKey(
       privateKey: privkey,
       name: name,
       password: password,
       chain: coin.chain,
     );
 
-    _saveWallet(wallet);
+    await _saveWallet(wallet);
+  }
+
+  void _importAddressWallet(address, name, Coin coin) async {
+    EasyLoading.show();
+    final wallet = AddressWallet.fromAddress(
+        address: address, name: name, chain: coin.chain);
+
+    await _saveWallet(wallet);
   }
 
   void _importMnemWallet(mnem, name, password) async {
     EasyLoading.show();
-    final wallet = MnemonicWallet.fromMnemonic(
+    final wallet = await MnemonicWallet.fromMnemonic(
         mnemonic: mnem, name: name, password: password);
 
     await _saveWallet(wallet);
   }
 
   Future<void> _saveWallet(wallet) async {
-    store.setWallet(wallet);
-    // ref.read(walletProvider.notifier).updateWallet(wallet);
+    await store.setWallet(wallet);
     EasyLoading.dismiss();
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, MyRouter.MAIN_TAB_PAGE);
+    if (!mounted) {
+      return;
     }
+    Navigator.pop(context);
   }
 }

@@ -286,7 +286,8 @@ class PrivateWallet extends Wallet {
   });
 
   factory PrivateWallet.fromJson(Map<String, dynamic> map) {
-    final type = WalletType.values.firstWhere((value) => value == map['type']);
+    final type =
+        WalletType.values.firstWhere((value) => value.name == map['type']);
     return PrivateWallet(
       name: map['name'],
       type: type,
@@ -329,7 +330,10 @@ class PrivateWallet extends Wallet {
     return PrivateWallet(
       name: name,
       type: WalletType.privateKey,
-      coins: {for (var coin in defaultCoinList) coin.id: coin},
+      coins: {
+        for (var coin in defaultCoinList)
+          if (coin.chain == chain) coin.id: coin
+      },
       account: account,
     );
   }
@@ -382,7 +386,8 @@ class AddressWallet extends Wallet {
   });
 
   factory AddressWallet.fromJson(Map<String, dynamic> map) {
-    final type = WalletType.values.firstWhere((value) => value == map['type']);
+    final type =
+        WalletType.values.firstWhere((value) => value.name == map['type']);
     return AddressWallet(
       name: map['name'],
       type: type,
@@ -420,7 +425,10 @@ class AddressWallet extends Wallet {
     return AddressWallet(
       name: name,
       type: WalletType.address,
-      coins: {for (var coin in defaultCoinList) coin.id: coin},
+      coins: {
+        for (var coin in defaultCoinList)
+          if (coin.chain == chain) coin.id: coin
+      },
       account: account,
     );
   }

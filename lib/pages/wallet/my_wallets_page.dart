@@ -27,7 +27,7 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
   void initState() {
     super.initState();
     _getWallets();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 1, vsync: this);
     _tabController!.addListener(() {
       setState(() {
         _tabIndex = _tabController!.index;
@@ -97,20 +97,13 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
         controller: _tabController,
         children: [
           _buildView(0),
-          _buildView(1),
+          // _buildView(1),
         ],
       ),
     );
   }
 
   Widget _buildView(index) {
-    final wallets = _wallets.where((wallet) {
-      if (index == 0) {
-        return wallet.type != WalletType.address;
-      } else {
-        return wallet.type == WalletType.address;
-      }
-    }).toList();
     return Container(
       padding: const EdgeInsets.only(bottom: 10, left: 20, right: 20, top: 10),
       color: Colors.white,
@@ -123,9 +116,9 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
           // const SizedBox(height: 20),
           Expanded(
             child: ListView.builder(
-              itemCount: wallets.length,
+              itemCount: _wallets.length,
               itemBuilder: (context, index) {
-                final wallet = wallets[index];
+                final wallet = _wallets[index];
                 final subWidget = Padding(
                   padding: const EdgeInsets.only(left: 60, top: 16),
                   child: Column(
@@ -158,7 +151,7 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
                     },
                     // wid: wallet.id!,
                     del: () async {
-                      _deleteWallet(wallet, wallets);
+                      _deleteWallet(wallet, _wallets);
                     },
                   ),
                 );
@@ -175,19 +168,21 @@ class _MyWalletsPageState extends ConsumerState<MyWalletsPage>
                           MaterialPageRoute(
                               builder: (context) => CreateWalletPage()));
                     }, width: 120),
-                    blackButton('导入钱包', () {
-                      Navigator.push(
+                    blackButton('导入钱包', () async {
+                      await Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => ImportWalletPage()));
+                      _getWallets();
                     }, width: 120),
                   ],
                 )
-              : blackButton('导入钱包', () {
-                  Navigator.push(
+              : blackButton('导入钱包', () async {
+                  await Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => ImportWalletPage()));
+                  _getWallets();
                 }),
         ],
       ),
