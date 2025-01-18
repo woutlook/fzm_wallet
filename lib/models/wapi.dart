@@ -1,8 +1,6 @@
 // ignore_for_file: non_constant_identifier_names, constant_identifier_names
 
-import 'dart:convert';
 import 'package:blockchain_utils/blockchain_utils.dart' as chains;
-import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:fzm_wallet/models/evm.dart';
 import 'package:fzm_wallet/models/chain33.dart';
 import 'package:fzm_wallet/models/trx.dart';
@@ -34,23 +32,23 @@ String hashData(String data) {
   return bytesToHex(hash);
 }
 
-String encryptData(String data, String password) {
-  final encrypter = _getEncrypter(password);
-  final encdata = encrypter.encrypt(data);
-  return encdata.base64;
-}
+// String encryptData(String data, String password) {
+//   final encrypter = _getEncrypter(password);
+//   final encdata = encrypter.encrypt(data);
+//   return encdata.base64;
+// }
 
-encrypt.Encrypter _getEncrypter(String password) {
-  final passHash = chains.SHA256.hash(password.codeUnits);
-  final key = encrypt.Key.fromBase64(base64Encode(passHash));
-  return encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.ecb));
-}
+// encrypt.Encrypter _getEncrypter(String password) {
+//   final passHash = chains.SHA256.hash(password.codeUnits);
+//   final key = encrypt.Key.fromBase64(base64Encode(passHash));
+//   return encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.ecb));
+// }
 
-String decryptData(String data, String password) {
-  final encrypter = _getEncrypter(password);
-  final x = encrypter.decrypt(encrypt.Encrypted.fromBase64(data));
-  return x;
-}
+// String decryptData(String data, String password) {
+//   final encrypter = _getEncrypter(password);
+//   final x = encrypter.decrypt(encrypt.Encrypted.fromBase64(data));
+//   return x;
+// }
 
 const walletApi = _WalletApi();
 
@@ -129,11 +127,12 @@ class _WalletApi {
     }
   }
 
-  Map<String, dynamic> getAccount(
-      {required String chain,
-      required String mnem,
-      BTCAddressType type = BTCAddressType.bip44,
-      int addressIndex = 0}) {
+  Map<String, dynamic> getAccount({
+    required String chain,
+    required String mnem,
+    BTCAddressType type = BTCAddressType.bip44,
+    int addressIndex = 0,
+  }) {
     try {
       final mnem39 = chains.Bip39Mnemonic.fromString(mnem);
       final bip39SeedGenerator = chains.Bip39SeedGenerator(mnem39);
@@ -163,17 +162,17 @@ class _WalletApi {
     }
   }
 
-  String encData(String data, String password) {
-    final encrypter = _getEncrypter(password);
-    final encPriv = encrypter.encrypt(data);
-    return encPriv.base64;
-  }
+  // String encData(String data, String password) {
+  //   final encrypter = _getEncrypter(password);
+  //   final encPriv = encrypter.encrypt(data);
+  //   return encPriv.base64;
+  // }
 
-  String decData(String data, String password) {
-    final encrypter = _getEncrypter(password);
-    final privateKey = encrypter.decrypt(encrypt.Encrypted.fromBase64(data));
-    return privateKey.toString();
-  }
+  // String decData(String data, String password) {
+  //   final encrypter = _getEncrypter(password);
+  //   final privateKey = encrypter.decrypt(encrypt.Encrypted.fromBase64(data));
+  //   return privateKey.toString();
+  // }
 
   String privToPub(String chain, String privateKey,
       {BTCAddressType type = BTCAddressType.bip44}) {

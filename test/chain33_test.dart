@@ -11,7 +11,7 @@ import 'package:fzm_wallet/utils/app_utils.dart';
 void main() {
   group('BTY Tests', () {
     late Chain33Api bty;
-    final btyToken = defaultCoins['BTY']!;
+    final btyToken = nativeCoinList.where((e) => e.symbol == 'BTY').first;
     late TokenTxArgs btyArgs;
     late String btyPrivKey;
     const from = '15AvnuWS9ELE7R1NDfrJotjmjB8R7QqkPr';
@@ -73,7 +73,7 @@ void main() {
 
   group('YCC Tests', () {
     late Chain33Api ycc;
-    final yccToken = defaultCoins['YCC']!;
+    final yccToken = nativeCoinList.where((e) => e.symbol == 'YCC').first;
     late TokenTxArgs yccArgs;
     late String yccPrivKey;
     late String from;

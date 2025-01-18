@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/wapi.dart';
 
-void main() {
+void main() async {
+  await store.storeInit();
   test('byteToHex converts byte array to hex string', () {
     final bytes = [0, 255, 16, 128];
     final hex = bytesToHex(bytes);
@@ -27,11 +29,12 @@ void main() {
   const mnemonic =
       'rough sun farm okay drill program want letter just tumble keen resource';
 
-  test('encMnem and decMnem encrypt and decrypt mnemonic', () {
+  test('encMnem and decMnem encrypt and decrypt mnemonic', () async {
     const mnem = chineseMenm;
     const password = 'testPassword';
-    final encMnem = encryptData(mnem, password);
-    final decMnem = decryptData(encMnem, password);
+    await store.setPassword(password);
+    final encMnem = await store.encryptData(mnem, password);
+    final decMnem = await store.decryptData(encMnem, password);
     expect(decMnem, mnem);
   });
 
@@ -49,11 +52,12 @@ void main() {
     expect(wallet['address'], isNotEmpty);
   });
 
-  test('encPriv and decPriv encrypt and decrypt private key', () {
+  test('encPriv and decPriv encrypt and decrypt private key', () async {
     const priv = privKey;
     const password = 'testPassword';
-    final encPriv = walletApi.encData(priv, password);
-    final decPriv = walletApi.decData(encPriv, password);
+    await store.setPassword(password);
+    final encPriv = await store.encryptData(priv, password);
+    final decPriv = await store.decryptData(encPriv, password);
     expect(decPriv, priv);
   });
 

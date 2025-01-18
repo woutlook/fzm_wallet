@@ -5,11 +5,11 @@ import 'package:fixnum/fixnum.dart';
 import 'package:blockchain_utils/blockchain_utils.dart' as chains;
 import 'package:blockchain_utils/signer/bitcoin_signer.dart' as btc_signer;
 
-import 'package:fzm_wallet/models/http.dart';
-import 'tx.dart';
-import 'wapi.dart';
-import 'pb/transaction.pb.dart';
-import 'pb/coins.pb.dart';
+import 'package:fzm_wallet/models/chain33_http.dart';
+import 'package:fzm_wallet/models/tx.dart';
+import 'package:fzm_wallet/models/wapi.dart';
+import 'package:fzm_wallet/models/pb/transaction.pb.dart';
+import 'package:fzm_wallet/models/pb/coins.pb.dart';
 
 const String YCC = 'YCC';
 const String BTY = 'BTY';
@@ -100,9 +100,6 @@ class Chain33Api extends WApi {
     String? tokenSymbol,
   }) async {
     final list = await _getTxList(addr, limit);
-    if (list.isEmpty) {
-      throw Exception('Failed to load tx list');
-    }
     return list;
   }
 
@@ -120,7 +117,6 @@ class Chain33Api extends WApi {
     ]);
     final result = resp['result'];
     if (result == null) {
-      // throw Exception('Failed to get tx list');
       return [];
     }
     final txInfos = result['txInfos'];

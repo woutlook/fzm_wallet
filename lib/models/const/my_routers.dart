@@ -2,6 +2,7 @@
 
 class MyRouter {
   static const String MAIN_TAB_PAGE = "/MainTabPage";
+  static const String WALLET_INDEX_PAGE = "/WalletIndexPage";
   static const String DOWNLOAD_PAGE = "/DownLoadPage";
   static const String LANG_PAGE = "/LangPage";
   static const String CREATE_WALLET_PAGE = "/CreateWalletPage";

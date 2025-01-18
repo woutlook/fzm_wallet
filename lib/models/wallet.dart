@@ -1,4 +1,5 @@
 import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/wapi.dart';
 
 enum WalletType {
@@ -64,7 +65,7 @@ abstract class Wallet {
   final WalletType type;
   String name;
   static final Map<int, Coin> cachedCoins = {
-    for (var coin in defaultCoins.values) coin.id: coin
+    for (var coin in allCoinList) coin.id: coin
   };
   final Map<int, Coin> coins; // key is coin id, value is coin name
 
@@ -82,11 +83,11 @@ abstract class Wallet {
   String typeString() {
     switch (type) {
       case WalletType.mnemonic:
-        return 'mnemonic';
+        return '助记词钱包';
       case WalletType.privateKey:
-        return 'privateKey';
+        return '私钥钱包';
       case WalletType.address:
-        return 'address';
+        return '地址钱包';
     }
   }
 
@@ -139,11 +140,11 @@ abstract class Wallet {
     throw UnimplementedError();
   }
 
-  String getAccountPrivateKey({
+  Future<String> getAccountPrivateKey({
     required String chain,
     required String password,
     BTCAddressType type = BTCAddressType.bip44,
-  }) {
+  }) async {
     throw UnimplementedError();
   }
 
@@ -198,12 +199,11 @@ class MnemonicWallet extends Wallet {
     return map;
   }
 
-  factory MnemonicWallet.fromMnemonic({
+  static Future<MnemonicWallet> fromMnemonic({
     required String mnemonic,
     required String name,
     required String password,
-  }) {
-    final encryptedMnemonic = encryptData(mnemonic, password);
+  }) async {
     final chains = wapiMap.keys.toList();
     final accMap = <String, AccountInfo>{};
     for (final chain in chains) {
@@ -213,15 +213,16 @@ class MnemonicWallet extends Wallet {
         address: json['address'],
         publicKey: json['pub'],
         chain: chain,
-        encryptedPrivKey: encryptData(private, password),
+        encryptedPrivKey: await store.encryptData(private, password),
       );
       accMap[chain] = accInfo;
     }
     final account = Account(
       accMap: accMap,
     );
-    final coins = {for (var coin in defaultCoins.values) coin.id: coin};
+    final coins = {for (var coin in defaultCoinList) coin.id: coin};
 
+    final encryptedMnemonic = await store.encryptData(mnemonic, password);
     return MnemonicWallet(
       name: name,
       type: WalletType.mnemonic,
@@ -245,16 +246,16 @@ class MnemonicWallet extends Wallet {
   }
 
   @override
-  String getAccountPrivateKey({
+  Future<String> getAccountPrivateKey({
     required String chain,
     required String password,
     BTCAddressType type = BTCAddressType.bip44,
-  }) {
+  }) async {
     final encPriv = account.accMap[chain]?.encryptedPrivKey;
     if (encPriv == null) {
       throw Exception('Private key not found');
     }
-    final privateKey = decryptData(encPriv, password);
+    final privateKey = await store.decryptData(encPriv, password);
     return privateKey;
   }
 
@@ -305,15 +306,15 @@ class PrivateWallet extends Wallet {
     };
   }
 
-  factory PrivateWallet.fromPrivateKey({
+  static Future<PrivateWallet> fromPrivateKey({
     required String privateKey,
     required String chain,
     required String name,
     required String password,
-  }) {
+  }) async {
     final publicKey = walletApi.privToPub(chain, privateKey);
     final address = walletApi.pubToAddr(chain, publicKey);
-    final encrypedPriv = encryptData(privateKey, password);
+    final encrypedPriv = await store.encryptData(privateKey, password);
 
     final accInfo = AccountInfo(
       address: address,
@@ -328,7 +329,7 @@ class PrivateWallet extends Wallet {
     return PrivateWallet(
       name: name,
       type: WalletType.privateKey,
-      coins: {for (var coin in defaultCoins.values) coin.id: coin},
+      coins: {for (var coin in defaultCoinList) coin.id: coin},
       account: account,
     );
   }
@@ -343,16 +344,16 @@ class PrivateWallet extends Wallet {
   }
 
   @override
-  String getAccountPrivateKey({
+  Future<String> getAccountPrivateKey({
     required String chain,
     required String password,
     BTCAddressType type = BTCAddressType.bip44,
-  }) {
+  }) async {
     final encPriv = account.accMap[chain]?.encryptedPrivKey;
     if (encPriv == null) {
       throw Exception('Private key not found');
     }
-    final privateKey = decryptData(encPriv, password);
+    final privateKey = await store.decryptData(encPriv, password);
     return privateKey;
   }
 
@@ -419,7 +420,7 @@ class AddressWallet extends Wallet {
     return AddressWallet(
       name: name,
       type: WalletType.address,
-      coins: {for (var coin in defaultCoins.values) coin.id: coin},
+      coins: {for (var coin in defaultCoinList) coin.id: coin},
       account: account,
     );
   }

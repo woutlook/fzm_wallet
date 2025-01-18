@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
-import 'package:fzm_wallet/models/chain33_http.dart';
 import 'package:fzm_wallet/models/coin.dart';
 import 'package:fzm_wallet/models/store.dart';
-import 'package:fzm_wallet/models/tab_coin.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/models/const/my_routers.dart';
 import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
 
@@ -24,30 +23,14 @@ class _ImportWalletPageState extends State<ImportWalletPage>
 
   final TextEditingController _mnemController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _pw1Controller = TextEditingController();
-  final TextEditingController _pw2Controller = TextEditingController();
-  final TextEditingController _privController = TextEditingController();
+  final TextEditingController _privOrAddrController = TextEditingController();
 
-  List<Coin> _mainChains = [];
-  Coin? _tab2SelectedChain;
+  Coin? _selectedCoin;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    getMainChains();
-  }
-
-  Future<void> getMainChains() async {
-    final resp = await Http.of().get(RECOMMEND_COIN);
-    final tabs = (resp.data as List)
-        .map((e) => TabCategory.fromJson(e as Map<String, dynamic>));
-    if (tabs.isEmpty) {
-      return;
-    }
-    setState(() {
-      _mainChains = tabs.first.items;
-    });
   }
 
   @override
@@ -55,9 +38,7 @@ class _ImportWalletPageState extends State<ImportWalletPage>
     _tabController.dispose();
     _mnemController.dispose();
     _nameController.dispose();
-    _pw1Controller.dispose();
-    _pw2Controller.dispose();
-    _privController.dispose();
+    _privOrAddrController.dispose();
     super.dispose();
   }
 
@@ -67,13 +48,13 @@ class _ImportWalletPageState extends State<ImportWalletPage>
   }
 
   Widget _build(BuildContext context) {
-    final list = _mainChains.map((e) {
+    final list = nativeCoinList.map((e) {
       return coinItem(
         context,
         e,
         onTap: () {
           setState(() {
-            _tab2SelectedChain = e;
+            _selectedCoin = e;
           });
           // Scaffold.of(context).openEndDrawer();
           Navigator.pop(context);
@@ -83,10 +64,12 @@ class _ImportWalletPageState extends State<ImportWalletPage>
     return Scaffold(
       appBar: appBar(
         context,
-        '导入账户',
-        trailing: scanButton(context, size: 28, (barcodeCaptrue) {
+        '导入钱包',
+        trailing: scanButton(context, size: 28, onDetect: (barcodeCaptrue) {
+          // TODO: scan private key
+          final result = barcodeCaptrue.barcodes.first.displayValue;
           setState(() {
-            // _privController.text = barcodeCaptrue;
+            _privOrAddrController.text = result ?? '';
           });
         }),
       ),
@@ -97,13 +80,13 @@ class _ImportWalletPageState extends State<ImportWalletPage>
             controller: _tabController,
             tabs: const [
               Tab(
-                text: '导入助记词',
+                text: '导入助记词钱包',
               ),
               Tab(
-                text: '导入私钥',
+                text: '导入私钥钱包',
               ),
               Tab(
-                text: '导入找回钱包',
+                text: '导入观察钱包',
               ),
             ],
           ),
@@ -114,8 +97,10 @@ class _ImportWalletPageState extends State<ImportWalletPage>
                   controller: _tabController,
                   children: [
                     _buildTabView(context, _tab1Children(context)),
-                    _buildTabView(context, _tab2Children(context)),
-                    _buildTabView(context, _tab3Children(context)),
+                    _buildTabView(context,
+                        _tab23Children(context, hintText: '请输入私钥或扫描私钥二维码')),
+                    _buildTabView(context,
+                        _tab23Children(context, hintText: '请输入地址或扫描地址二维码')),
                   ],
                 );
               },
@@ -126,19 +111,15 @@ class _ImportWalletPageState extends State<ImportWalletPage>
     );
   }
 
-  List<Widget> _tab3Children(context) {
-    return [];
-  }
-
   List<Widget> _sharedChildren() {
     return [
-      normalInput(_nameController, '设置账户名称', labelText: '钱包名称'),
+      normalInput(_nameController, '设置钱包名称', labelText: '钱包名称'),
       const SizedBox(height: 20),
-      passwordInput(_pw1Controller, _pw2Controller),
+      // passwordInput(_pw1Controller, _pw2Controller),
     ];
   }
 
-  List<Widget> _tab2Children(context) {
+  List<Widget> _tab23Children(context, {required String hintText}) {
     return [
       GestureDetector(
         onTap: () {
@@ -156,12 +137,12 @@ class _ImportWalletPageState extends State<ImportWalletPage>
               const Spacer(),
               Row(
                 children: [
-                  if (_tab2SelectedChain != null)
-                    Image.network(_tab2SelectedChain!.icon!,
+                  if (_selectedCoin != null)
+                    Image.network(_selectedCoin!.icon!,
                         width: 32.0, height: 32.0),
                   const SizedBox(width: 8.0),
                   Text(
-                    _tab2SelectedChain?.name ?? '选择主链',
+                    _selectedCoin?.name ?? '选择主链',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
@@ -174,10 +155,10 @@ class _ImportWalletPageState extends State<ImportWalletPage>
       ),
       const SizedBox(height: 20.0),
       TextField(
-        controller: _privController,
+        controller: _privOrAddrController,
         maxLines: 2,
         decoration: InputDecoration(
-          hintText: '请输入私钥或扫描私钥生成的二维码登录',
+          hintText: hintText,
           hintStyle: TextStyle(color: AppColors.grayd9),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
@@ -222,7 +203,7 @@ class _ImportWalletPageState extends State<ImportWalletPage>
         margin: const EdgeInsets.only(top: 15, bottom: 30),
         alignment: Alignment.center,
         child: Text(
-          "账户支持导入所有遵循BIP标准生成的助记词",
+          "钱包支持导入所有遵循BIP标准生成的助记词",
           style: TextStyle(color: AppColors.button, fontSize: 14),
         ),
       ),
@@ -250,7 +231,7 @@ class _ImportWalletPageState extends State<ImportWalletPage>
                     ...children,
                     const Spacer(),
                     const SizedBox(height: 20),
-                    blackButton('导入账户', () {
+                    blackButton('导入钱包', () {
                       final index = _tabController.index;
                       _finishTask(index);
                     }),
@@ -264,52 +245,38 @@ class _ImportWalletPageState extends State<ImportWalletPage>
     );
   }
 
-  _finishTask(index) {
+  _finishTask(index) async {
     final name = _nameController.text;
-    final password = _pw1Controller.text;
-    final passwordAgain = _pw2Controller.text;
-    if (_checked(name, password, passwordAgain)) {
-      if (index == 0) {
-        final mnem = _mnemController.text;
-        // final mnem = formatString(mnemS);
-        _importMnemWallet(mnem, name, password);
-      } else if (index == 1) {
-        final privkey = _privController.text;
-        if (_tab2SelectedChain == null) {
-          toast("请选择主链");
-          return;
-        }
-        _importPrivWallet(privkey, name, password, _tab2SelectedChain!);
-      } else if (index == 2) {
-        // _importFindWallet(mnem, name, password);
-        toast("暂未开放");
+    if (name.isEmpty) {
+      toast("请输入钱包名称");
+      return;
+    }
+    final walletList = store.getWalletList();
+    for (var w in walletList) {
+      if (w == name) {
+        toast("钱包名称已存在");
+        return;
       }
     }
-  }
-
-  bool _checked(String name, String password, String passwordAgain) {
-    var check = true;
-    if (name.isEmpty) {
-      toast("请输入账户名称");
-      check = false;
-    } else if (password.isEmpty) {
-      toast("请输入密码");
-      check = false;
-    } else if (passwordAgain.isEmpty) {
-      toast("请再次输入密码");
-      check = false;
-    } else if (password.length < 8 || password.length > 16) {
-      toast("请输入8-16位字符");
-      check = false;
-    } else if (password != passwordAgain) {
-      toast("两次密码不相同");
-      check = false;
-    } else if (!isFormatValid(password)) {
-      toast("请输入8-16位字母数字组合");
-      check = false;
+    final password = await showPasswordDialog(context);
+    if (password == null) {
+      return;
     }
-
-    return check;
+    if (index == 0) {
+      final mnemS = _mnemController.text;
+      final mnem = formatString(mnemS);
+      _importMnemWallet(mnem, name, password);
+    } else if (index == 1) {
+      final privkey = _privOrAddrController.text;
+      if (_selectedCoin == null) {
+        toast("请选择主链");
+        return;
+      }
+      _importPrivWallet(privkey, name, password, _selectedCoin!);
+    } else if (index == 2) {
+      // _importFindWallet(mnem, name, password);
+      toast("暂未开放");
+    }
   }
 
   bool isFormatValid(String str) {
@@ -319,7 +286,6 @@ class _ImportWalletPageState extends State<ImportWalletPage>
 
   void _importPrivWallet(privkey, name, password, Coin coin) async {
     EasyLoading.show();
-    // final encPriv = encryptData(privkey, password);
     final wallet = PrivateWallet.fromPrivateKey(
       privateKey: privkey,
       name: name,
@@ -327,35 +293,20 @@ class _ImportWalletPageState extends State<ImportWalletPage>
       chain: coin.chain,
     );
 
-    // final wallet = PwalletBean(
-    //   type: PwalletBean.TYPE_PRIVATE,
-    //   name: name,
-    //   password: passwordHash,
-    //   privKey: encPriv,
-    //   chain: coin.chain,
-    //   platform: coin.platform,
-    // );
     _saveWallet(wallet);
   }
 
   void _importMnemWallet(mnem, name, password) async {
     EasyLoading.show();
-    // final encMnem = encryptData(mnem, password);
     final wallet = MnemonicWallet.fromMnemonic(
         mnemonic: mnem, name: name, password: password);
 
-    // final wallet = PwalletBean(
-    //   type: PwalletBean.TYPE_MNEM,
-    //   name: name,
-    //   password: passwordHash,
-    //   mnem: mnemHash,
-    //   mnemType: 0,
-    // );
     await _saveWallet(wallet);
   }
 
   Future<void> _saveWallet(wallet) async {
     store.setWallet(wallet);
+    // ref.read(walletProvider.notifier).updateWallet(wallet);
     EasyLoading.dismiss();
     if (mounted) {
       Navigator.pushReplacementNamed(context, MyRouter.MAIN_TAB_PAGE);

@@ -21,6 +21,10 @@ class _LangPageState extends State<LangPage> {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
         appBar: appBar(context, '语言'),
         body: Column(

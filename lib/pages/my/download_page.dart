@@ -12,6 +12,10 @@ class DownLoadPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
       appBar: appBar(context, '应用下载'),
       body: Container(
@@ -20,7 +24,7 @@ class DownLoadPage extends StatelessWidget {
           alignment: AlignmentDirectional.topCenter,
           children: [
             const Image(
-              image: AssetImage("images/bg_share_er_code.png"),
+              image: AssetImage("assets/images/bg_share_er_code.png"),
               height: 400,
               fit: BoxFit.fill,
             ),

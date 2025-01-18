@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:fzm_wallet/models/coin.dart';
 import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/wallet.dart';
-import 'package:fzm_wallet/models/wapi.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-
-import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/pages/wallet/change_passwd.dart';
+import 'package:fzm_wallet/pages/wallet/import_wallet_page.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:fzm_wallet/widget/my_page_item.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class WalletDetailsPage extends ConsumerStatefulWidget {
   const WalletDetailsPage({super.key});
@@ -39,33 +40,37 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
     if (_controller.text.isEmpty) {
       _controller.text = wallet.name;
     }
-    final showCoins = wallet.coinList;
+    // final showCoins = nativeCoinList;
     return Scaffold(
-      appBar: appBar(context, '账户设置'),
+      appBar: appBar(context, '钱包设置'),
       body: SingleChildScrollView(
         child: RepaintBoundary(
           child: Column(
             children: [
               MyPageItem(
-                "images/icon_share.png",
+                "assets/images/icon_share.png",
                 "忘记密码",
                 onTap: () {
-                  Navigator.pushNamed(context, MyRouter.CHECK_MNEM_PAGE);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return ImportWalletPage();
+                  }));
                 },
               ),
               MyPageItem(
-                "images/icon_share.png",
+                "assets/images/icon_share.png",
                 "修改密码",
                 onTap: () {
-                  Navigator.pushNamed(context, MyRouter.CHANGE_PASSWD_PAGE);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return ChangePasswordPage();
+                  }));
                 },
               ),
               MyPageItem(
-                "images/icon_share.png",
-                "修改账户名称",
+                "assets/images/icon_share.png",
+                "修改钱包名称",
                 onTap: () async {
                   final result =
-                      await _showCustomDialog(context, '修改账户名称', '请输入新的账户名称');
+                      await _showCustomDialog(context, '修改钱包名称', '请输入新的钱包名称');
                   if (result != null) {
                     _updateWalletName(wallet, result);
                   }
@@ -76,7 +81,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                 child: Row(
                   children: [
                     const Image(
-                      image: AssetImage('images/icon_share.png'),
+                      image: AssetImage('assets/images/icon_share.png'),
                       width: 25,
                       height: 25,
                     ),
@@ -89,25 +94,20 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                     Transform.scale(
                       scale: 0.7,
                       child: Switch(
-                        value: noPasswordPay,
-                        onChanged: (value) async {
-                          // final ok = await wallet.unlock(context);
-                          // if (!ok) {
-                          //   return;
-                          // }
-                          // wallet.nopasswordPay = value;
-                        },
-                      ),
+                          value: noPasswordPay,
+                          onChanged: (value) async {
+                            // todo sth
+                          }),
                     ),
                   ],
                 ),
               ),
               MyPageItem(
-                "images/icon_share.png",
+                "assets/images/icon_share.png",
                 "导出助记词",
                 onTap: () async {
                   if (wallet.type != WalletType.mnemonic) {
-                    toast("只有助记词账户才能导出助记词");
+                    toast("只有助记词钱包才能导出助记词");
                     return;
                   }
                   final password = await _showPasswordDialog(context);
@@ -121,7 +121,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                 },
               ),
               MyPageItem(
-                "images/icon_share.png",
+                "assets/images/icon_share.png",
                 "导出私钥",
                 onTap: () async {
                   final password = await _showPasswordDialog(context);
@@ -131,23 +131,23 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                   if (!context.mounted) {
                     return;
                   }
-                  _showBottomDrawer(context, showCoins, (coin) {
-                    _showKeyDialog(context, coin,
+                  _showBottomDrawer(context, (coin) async {
+                    await _showKeyDialog(context, coin,
                         password: password, wallet: wallet);
                   });
                 },
               ),
               MyPageItem(
-                "images/icon_share.png",
+                "assets/images/icon_share.png",
                 "导出公钥",
-                onTap: () {
-                  _showBottomDrawer(context, showCoins, (coin) {
-                    _showKeyDialog(context, coin);
+                onTap: () async {
+                  _showBottomDrawer(context, (coin) async {
+                    await _showKeyDialog(context, coin, wallet: wallet);
                   });
                 },
               ),
               MyPageItem(
-                "images/icon_share.png",
+                "assets/images/icon_share.png",
                 "绑定找回钱包",
                 onTap: () async {
                   final password = await _showPasswordDialog(context);
@@ -173,7 +173,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
               //       _deleteWallet(wallet);
               //     },
               //     child: const Text(
-              //       "删除账户",
+              //       "删除钱包",
               //       style: TextStyle(color: Colors.black, fontSize: 16),
               //     ),
               //   ),
@@ -185,8 +185,9 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
     );
   }
 
-  void _showBottomDrawer(context, coins, onTap) {
-    showModalBottomSheet(
+  Future<void> _showBottomDrawer(context, onTap) async {
+    final coins = nativeCoinList;
+    await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return Container(
@@ -226,43 +227,48 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                 child: ListView.builder(
                   itemCount: coins.length, // 假设 coins 是一个包含所有币种信息的列表
                   itemBuilder: (context, index) {
-                    final coin = coins[index];
                     return Padding(
                       padding: const EdgeInsets.all(10),
-                      child: InkWell(
-                        onTap: () {
-                          onTap(coin);
-                        },
-                        child: Row(
-                          children: [
-                            Image.network(
-                              coin.icon ?? "",
-                              width: 32,
-                              height: 32,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.error),
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                    '${coin.name ?? ""} ${coin.nickname ?? ""}'),
-                                Text(
-                                  coin.address != null &&
-                                          coin.address!.length >= 30
-                                      ? '${coin.address?.substring(0, 16)}...${coin.address?.substring(coin.address!.length - 14)}'
-                                      : coin.address ?? "",
-                                  style: const TextStyle(
+                      child: LayoutBuilder(builder: (context, constraints) {
+                        final coin = coins[index];
+                        final wallet = ref.read(walletProvider);
+                        final address =
+                            wallet.getAccountAddress(chain: coin.chain);
+
+                        final displayAddress =
+                            formatAddress(address, start: 18, end: 16);
+                        return InkWell(
+                          onTap: () {
+                            onTap(coin);
+                          },
+                          child: Row(
+                            children: [
+                              Image.asset(
+                                coin.icon ?? '',
+                                width: 32,
+                                height: 32,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.error),
+                              ),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('${coin.name} ${coin.nickname ?? ''}'),
+                                  Text(
+                                    displayAddress,
+                                    style: const TextStyle(
                                       fontFamily: 'monospace',
-                                      color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                                      color: Colors.grey,
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                     );
                   },
                 ),
@@ -274,13 +280,15 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
     );
   }
 
-  void _showKeyDialog(context, coin, {String? password, Wallet? wallet}) async {
+  Future<void> _showKeyDialog(context, Coin coin,
+      {String? password, required Wallet wallet}) async {
     final keyTitle = password == null || password.isEmpty ? '公钥' : '私钥';
-    String? key = coin.pubkey;
+    String key = wallet.getAccountPublicKey(chain: coin.chain);
     if (password != null && password.isNotEmpty) {
-      key = await coin.getPriv(password, wallet);
+      key = await wallet.getAccountPrivateKey(
+          chain: coin.chain, password: password);
     }
-    showDialog(
+    await showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
@@ -291,6 +299,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
             padding:
                 const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 20),
             height: 440,
+            width: 400,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -299,7 +308,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                   child: Row(
                     children: <Widget>[
                       Text(
-                        '${coin.name ?? ""} $keyTitle',
+                        '${coin.name} $keyTitle',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 20),
                       ),
@@ -319,7 +328,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: key?.substring(0, key.length ~/ 2) ?? "",
+                        text: key.substring(0, key.length ~/ 2),
                         style: const TextStyle(
                             fontFamily: 'monospace', fontSize: 13),
                       ),
@@ -327,7 +336,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                         text: '\n',
                       ),
                       TextSpan(
-                        text: key?.substring(key.length ~/ 2) ?? "",
+                        text: key.substring(key.length ~/ 2),
                         style: const TextStyle(
                             fontFamily: 'monospace', fontSize: 13),
                       ),
@@ -337,7 +346,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                 ),
                 const SizedBox(height: 30),
                 QrImageView(
-                  data: key ?? "",
+                  data: key,
                   size: 120.0,
                 ),
                 const SizedBox(height: 30),
@@ -351,10 +360,8 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
                   child:
                       const Text('复制', style: TextStyle(color: Colors.white)),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: coin.pubkey ?? ""));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('$keyTitle已复制到剪贴板')),
-                    );
+                    Clipboard.setData(ClipboardData(text: key));
+                    toast('$keyTitle已复制到剪贴板');
                   },
                 ),
                 const Expanded(child: Center()),
@@ -367,9 +374,9 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
   }
 
   _updateWalletName(Wallet wallet, newName) async {
-    final old = wallet.name;
-    wallet.name = newName;
-    store.updateWallet(old, wallet);
+    await ref
+        .read(walletProvider.notifier)
+        .changeWalletName(wallet.name, newName);
   }
 
   Future<String?> _showPasswordDialog(context) async {
@@ -386,6 +393,7 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
               borderRadius: BorderRadius.circular(6.0),
             ),
             child: Container(
+              width: 400,
               padding: const EdgeInsets.only(left: 16, right: 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -453,79 +461,79 @@ class _WalletDetailsPageState extends ConsumerState<WalletDetailsPage> {
   }
 
   Future<void> _showMnemDialog(context, wallet, password) async {
-    final mnem = decryptData(wallet.encryptedMnemonic, password);
+    final mnem = await store.decryptData(wallet.encryptedMnemonic, password);
     return showDialog<void>(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6.0),
-            ),
-            child: SingleChildScrollView(
-              child: Container(
-                padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
-                height: 640,
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          "导出助记词",
-                          style: TextStyle(
-                              color: AppColors.gray33,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    ),
-                    const Divider(),
-                    Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                          color: AppColors.gray2b,
-                          border:
-                              Border.all(color: AppColors.grayd9, width: 0.5),
-                          borderRadius: BorderRadius.circular(8)),
-                      margin:
-                          const EdgeInsets.only(top: 20, left: 16, right: 16),
-                      padding: const EdgeInsets.only(
-                          left: 8, right: 8, top: 15, bottom: 15),
-                      child: Text(
-                        mnem,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold),
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6.0),
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
+              height: 540,
+              width: 440,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "导出助记词",
+                        style: TextStyle(
+                            color: AppColors.gray33,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500),
                       ),
-                    ),
-                    const SizedBox(height: 15),
-                    const Text('请务必妥善保存助记词，离线保存，建议手工抄写',
-                        style: TextStyle(color: Colors.red, fontSize: 12)),
-                    Container(
-                      margin: const EdgeInsets.only(top: 20, bottom: 20),
-                      child: QrImageView(
-                        data: mnem,
-                        size: 150,
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
                       ),
+                    ],
+                  ),
+                  const Divider(),
+                  Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                        color: AppColors.gray2b,
+                        border: Border.all(color: AppColors.grayd9, width: 0.5),
+                        borderRadius: BorderRadius.circular(8)),
+                    margin: const EdgeInsets.only(top: 20, left: 16, right: 16),
+                    padding: const EdgeInsets.only(
+                        left: 8, right: 8, top: 15, bottom: 15),
+                    child: Text(
+                      mnem,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold),
                     ),
-                    const Text('助记词二维码', style: TextStyle(fontSize: 12)),
-                    const SizedBox(height: 20),
-                    blueButton('复制', () {
-                      Clipboard.setData(ClipboardData(text: mnem));
-                      toast("复制成功!");
-                    }, width: 120),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 15),
+                  const Text('请务必妥善保存助记词，离线保存，建议手工抄写',
+                      style: TextStyle(color: Colors.red, fontSize: 12)),
+                  Container(
+                    margin: const EdgeInsets.only(top: 20, bottom: 20),
+                    child: QrImageView(
+                      data: mnem,
+                      size: 150,
+                    ),
+                  ),
+                  const Text('助记词二维码', style: TextStyle(fontSize: 12)),
+                  const SizedBox(height: 20),
+                  blueButton('复制', () {
+                    Clipboard.setData(ClipboardData(text: mnem));
+                    toast("复制成功!");
+                  }, width: 120),
+                ],
               ),
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 }

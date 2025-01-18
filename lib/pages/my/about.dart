@@ -6,6 +6,10 @@ class AboutPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
       appBar: appBar(
         context,
@@ -14,7 +18,7 @@ class AboutPage extends StatelessWidget {
       body: Center(
         child: Column(
           children: [
-            Image.asset('images/ic_app.png', width: 100, height: 100),
+            Image.asset('assets/images/ic_app.png', width: 100, height: 100),
             const SizedBox(height: 20),
             const Text('MyDao v1.0.0'),
           ],

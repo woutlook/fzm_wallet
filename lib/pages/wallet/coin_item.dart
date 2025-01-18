@@ -47,24 +47,38 @@ class CoinItem extends ConsumerWidget {
       margin: const EdgeInsets.only(top: 10),
       child: Row(
         children: [
-          Image.network(
+          Image.asset(
             coin.icon ?? '',
             width: 32,
             height: 32,
-            fit: BoxFit.cover,
+            // fit: BoxFit.cover,
             errorBuilder:
                 (BuildContext context, Object error, StackTrace? stackTrace) {
               return const Icon(Icons.error, size: 32); // 或者你可以使用其他占位符图像
             },
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 15),
-            child: Text(
-              '${coin.name}(${coin.nickname} )',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+            padding: const EdgeInsets.only(left: 10),
+            child: Row(
+              children: [
+                Text(
+                  coin.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    '(${coin.nickname ?? ''})',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const Spacer(),

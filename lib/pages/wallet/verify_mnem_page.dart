@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fzm_wallet/models/const/my_routers.dart';
 import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/pages/main_tab_page.dart';
 import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:reorderables/reorderables.dart';
 
 import 'package:fzm_wallet/models/const/wallet_color.dart';
@@ -16,17 +17,8 @@ class MnemSelect {
   late String word;
 
   MnemSelect({required this.isSelected, required this.word});
-
-  // @override
-  // bool operator ==(Object other) {
-  //   return other is MnemSelect && other.word == word;
-  // }
-
-  // @override
-  // int get hashCode => super.hashCode;
 }
 
-//import 'dart:ffi'; 莫名出现这个要删除
 class VirefyMnemPage extends ConsumerStatefulWidget {
   const VirefyMnemPage({super.key});
 
@@ -121,11 +113,10 @@ class _VirefyMnemPageState extends ConsumerState<VirefyMnemPage> {
   }
 
   Widget _build(BuildContext context) {
-    var arguments =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
-    final originalMnem = arguments['mnem'];
-    final name = arguments['name'];
-    final password = arguments['password'];
+    final arguments = ref.watch(createWalletParameterProvider);
+    final originalMnem = arguments["mnem"];
+    final name = arguments["name"];
+    final password = arguments["password"];
     final mnemList = originalMnem!.split(' ');
     final mnems = mnemList
         .map((value) => MnemSelect(isSelected: false, word: value))
@@ -192,8 +183,9 @@ class _VirefyMnemPageState extends ConsumerState<VirefyMnemPage> {
                 const Spacer(),
                 blackButton(
                   '创建钱包',
-                  () {
-                    _createHDWallet(context, originalMnem, name, password);
+                  () async {
+                    await _createHDWallet(
+                        context, originalMnem, name, password);
                   },
                 ),
               ],
@@ -204,29 +196,44 @@ class _VirefyMnemPageState extends ConsumerState<VirefyMnemPage> {
     );
   }
 
-  // ...existing code...
-  void _createWallet(BuildContext context, String originalMnem,
-      String name, String password) {
-    final wallet = MnemonicWallet.fromMnemonic(
+  Future<Wallet> _createWallet(BuildContext context, String originalMnem,
+      String name, String password) async {
+    final wallet = await MnemonicWallet.fromMnemonic(
       mnemonic: originalMnem,
       name: name,
       password: password,
     );
-    store.setWallet(wallet);
-    ref.read(walletProvider.notifier).updateWallet(wallet);
-    Navigator.pushNamed(context, MyRouter.MAIN_TAB_PAGE);
+    await store.setWallet(wallet);
+    return wallet;
   }
-  // ...existing code...
 
-  void _createHDWallet(context, String originalMnem, name, password) {
+  Future<void> _createHDWallet(
+    context,
+    String originalMnem,
+    name,
+    password,
+  ) async {
     var selectMnemStr =
         _selectMnems.map((item) => item.word).toList().join(' ');
     if (selectMnemStr != originalMnem) {
-      // toast("助记词不正确");
+      toast("助记词不正确");
+      // todo: must return
       // return;
     }
+
     EasyLoading.show(status: '创建中...');
-    _createWallet(context, originalMnem, name, password);
+    await Future.delayed(Duration(milliseconds: 100));
+
+    final wallet = await _createWallet(context, originalMnem, name, password);
+    ref.read(walletProvider.notifier).updateWallet(wallet);
+
     EasyLoading.dismiss();
+
+    if (!mounted) {
+      return;
+    }
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return const MainTabPage();
+    }));
   }
 }

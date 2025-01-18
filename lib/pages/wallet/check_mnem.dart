@@ -9,6 +9,10 @@ class CheckMnemPage extends ConsumerWidget {
 
   @override
   Widget build(context, ref) {
+    return buildLayout(context, child: _build(context, ref));
+  }
+
+  Widget _build(context, ref) {
     return Scaffold(
       appBar: appBar(context, "验证助记词"),
       body: Container(
@@ -19,38 +23,11 @@ class CheckMnemPage extends ConsumerWidget {
             multLinesInput(_mnemController, '请输入助记词，用空格分割'),
             const SizedBox(height: 30),
             blueButton('开始校验', () async {
-              // const reslut = false;
-              // EasyLoading.dismiss();
-              // if (reslut) {
-              //   if (context.mounted) {
-              //     Navigator.pushNamed(context, MyRouter.RESET_PASSWD_PAGE);
-              //   }
-              // } else {
-              //   EasyLoading.showError("助记词错误");
-              // }
+              //
             }),
           ],
         ),
       ),
     );
   }
-
-  // Future<bool> _doCheckMnem() async {
-  //   EasyLoading.show();
-
-  //   try {
-  //     final preCoin = BaseData.DEFAULT_COINS[0];
-  //     final mnemS = _mnemController.text;
-  //     final mnem = formatString(mnemS);
-  //     final db = getDB();
-  //     final list =
-  //         await db.query('Coin', where: 'id = ?', whereArgs: [preCoin.id]);
-  //     final coin = list.map((e) => CoinBean.fromJson(e)).toList()[0];
-  //     final map = walletApi.getHDWallet(coin.chain!, mnem);
-  //     final pub = map["pub"];
-  //     return pub == coin.pubkey;
-  //   } catch (e) {
-  //     return false;
-  //   }
-  // }
 }

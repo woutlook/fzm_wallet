@@ -1,15 +1,15 @@
 import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
 import 'package:flutter/material.dart';
 
-class Scan extends StatefulWidget {
+class ScanPage extends StatefulWidget {
   final Function(BarcodeCapture) onScan;
-  const Scan({super.key, required this.onScan});
+  const ScanPage({super.key, required this.onScan});
 
   @override
-  State<Scan> createState() => _ScanState();
+  State<ScanPage> createState() => _ScanPageState();
 }
 
-class _ScanState extends State<Scan> {
+class _ScanPageState extends State<ScanPage> {
   @override
   Widget build(BuildContext context) {
     return AiBarcodeScanner(

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import 'package:fzm_wallet/models/coin.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
@@ -23,11 +22,9 @@ class _RecvPageState extends ConsumerState<RecvPage> {
   }
 
   Widget _build(context) {
-    Map<String, dynamic>? arguments =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final coin = arguments?['coin'] as Coin;
+    final coin = ref.watch(coinProvider);
     final wallet = ref.watch(walletProvider);
-    final address = wallet.getAccountAddress(chain: coin.chain);
+    final address = wallet.getAccountAddress(chain: coin!.chain);
     return Scaffold(
       appBar: appBar(
         context,

@@ -20,12 +20,12 @@ class _MainTabPageState extends State<MainTabPage> {
     super.initState();
 
     bottomViews = [
-      getBottomItem("images/tab_icon_home_nor.png",
-          "images/tab_icon_home_select.png", "首页"),
-      getBottomItem("images/tab_icon_explore_nor.png",
-          "images/tab_icon_explore_select.png", "探索"),
-      getBottomItem(
-          "images/tab_icon_my_nor.png", "images/tab_icon_my_select.png", "我的")
+      getBottomItem("assets/images/tab_icon_home_nor.png",
+          "assets/images/tab_icon_home_select.png", "首页"),
+      getBottomItem("assets/images/tab_icon_explore_nor.png",
+          "assets/images/tab_icon_explore_select.png", "探索"),
+      getBottomItem("assets/images/tab_icon_my_nor.png",
+          "assets/images/tab_icon_my_select.png", "我的")
     ];
   }
 
@@ -53,9 +53,9 @@ class _MainTabPageState extends State<MainTabPage> {
   Widget _build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
-        index: currentIndex,
-        children: const [HomePage(), ExPage(), MyPage()],
-      ),
+          index: currentIndex,
+          children: const [HomePage(), ExPage(), MyPage()],
+          ),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.black,
         items: bottomViews,

@@ -1,20 +1,19 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-// import 'package:fzm_wallet/widget/base_appbar.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
-// import 'package:url_launcher/url_launcher.dart';
 
-class WebPage extends StatefulWidget {
+class WebPage extends ConsumerStatefulWidget {
   const WebPage({super.key});
 
   @override
-  State<WebPage> createState() => _WebPageState();
+  ConsumerState<WebPage> createState() => _WebPageState();
 }
 
-class _WebPageState extends State<WebPage> {
-// InAppWebViewController? _controller;
-  String? url;
+class _WebPageState extends ConsumerState<WebPage> {
+  // InAppWebViewController? _controller;
+  // String? url;
 
   @override
   void initState() {
@@ -27,31 +26,32 @@ class _WebPageState extends State<WebPage> {
   }
 
   Widget _build(BuildContext context) {
-    Map<String, dynamic>? arguments =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    url = arguments?["url"];
-    if (defaultTargetPlatform == TargetPlatform.macOS) {
-      InAppBrowser().openUrlRequest(urlRequest: URLRequest(url: WebUri(url!)));
-      return Scaffold(
-        // appBar: BaseAppBar("网页"),
-        appBar: appBar(context, '网页'),
-        body: const Center(
-          child: Text("macOS不支持WebView"),
-        ),
-      );
-    } else {
-      // _controller?.loadUrl(urlRequest:
-      return Scaffold(
-        appBar: appBar(context, '网页'),
-        // appBar: BaseAppBar("网页"),
-        body: InAppWebView(
-          onWebViewCreated: (controller) {
-            // _controller = controller;
-          },
-          initialUrlRequest: URLRequest(url: WebUri(url!)),
-        ),
-      );
-    }
+    // Map<String, dynamic>? arguments =
+    //     ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    // url = arguments?["url"];
+    // if (defaultTargetPlatform == TargetPlatform.macOS) {
+    //   InAppBrowser().openUrlRequest(urlRequest: URLRequest(url: WebUri(url!)));
+    //   return Scaffold(
+    //     appBar: appBar(context, '网页'),
+    //     body: const Center(
+    //       child: Text("macOS不支持WebView"),
+    //     ),
+    //   );
+    // } else {
+    final url = ref.watch(urlProvider);
+    return Scaffold(
+      appBar: appBar(context, '网页'),
+      body: InAppWebView(
+        onWebViewCreated: (controller) {
+          // _controller = controller;
+        },
+        initialUrlRequest: URLRequest(url: WebUri(url!)),
+      ),
+      // body: const Center(
+      //   child: Text("不支持WebView"),
+      // ),
+    );
+    // }
 
     // body: WebViewWidget(controller: WebViewController()
     //   ..setJavaScriptMode(JavaScriptMode.unrestricted)

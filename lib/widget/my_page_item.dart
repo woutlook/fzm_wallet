@@ -67,7 +67,7 @@ class _MyPageItemState extends State<MyPageItem> {
                 ],
               ),
               SvgPicture.asset(
-                "images/ic_right.svg",
+                "assets/images/ic_right.svg",
                 width: 16,
                 height: 16,
               )

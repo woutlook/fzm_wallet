@@ -1,13 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/pages/my/about.dart';
+import 'package:fzm_wallet/pages/my/contects.dart';
+import 'package:fzm_wallet/pages/my/download_page.dart';
+import 'package:fzm_wallet/pages/my/lang_page.dart';
+import 'package:fzm_wallet/pages/wallet/my_wallets_page.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
 import 'package:install_plugin/install_plugin.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../widget/my_page_item.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -43,12 +46,13 @@ class _MyPageState extends State<MyPage> {
           children: [
             InkWell(
               onTap: () {
-                Navigator.pushNamed(context, MyRouter.CONTECTS_PAGE);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => MyContactsPage()));
               },
               child: Column(
                 children: [
                   Image.asset(
-                    "images/my_contacts.png",
+                    "assets/images/my_contacts.png",
                     width: 30,
                     height: 30,
                   ),
@@ -59,12 +63,13 @@ class _MyPageState extends State<MyPage> {
             const Spacer(),
             InkWell(
               onTap: () {
-                Navigator.pushNamed(context, MyRouter.MY_WALLETS_PAGE);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => MyWalletsPage()));
               },
               child: Column(
                 children: [
                   Image.asset(
-                    "images/my_message.png",
+                    "assets/images/my_message.png",
                     width: 30,
                     height: 30,
                   ),
@@ -84,9 +89,10 @@ class _MyPageState extends State<MyPage> {
   }
 
   Widget _build(BuildContext context) {
-    final langs = AppLocalizations.of(context)!.str_lang;
-    final updates = AppLocalizations.of(context)!.str_update;
-    final abouts = AppLocalizations.of(context)!.str_about;
+    final share = '共享'; // AppLocalizations.of(context)!.str_share;
+    final langs = '语言'; //AppLocalizations.of(context)!.str_lang;
+    final updates = '升级'; //AppLocalizations.of(context)!.str_update;
+    final abouts = '关于'; //AppLocalizations.of(context)!.str_about;
     return Scaffold(
       appBar: appBar(context, '我的', leading: const SizedBox()),
       body: Column(
@@ -96,31 +102,34 @@ class _MyPageState extends State<MyPage> {
             child: _buildCard(),
           ),
           MyPageItem(
-            "images/icon_share.png",
-            AppLocalizations.of(context)!.str_share,
+            "assets/images/icon_share.png",
+            share,
             onTap: () {
-              Navigator.pushNamed(context, MyRouter.DOWNLOAD_PAGE);
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => DownLoadPage()));
             },
           ),
           MyPageItem(
-            "images/icon_language.png",
+            "assets/images/icon_language.png",
             langs,
             onTap: () {
-              Navigator.pushNamed(context, MyRouter.LANG_PAGE);
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => LangPage()));
             },
           ),
           MyPageItem(
-            "images/icon_download.png",
+            "assets/images/icon_download.png",
             updates,
             onTap: () {
               _showDownloadDialog();
             },
           ),
           MyPageItem(
-            "images/icon_about.png",
+            "assets/images/icon_about.png",
             abouts,
             onTap: () {
-              Navigator.pushNamed(context, MyRouter.ABOUT_PAGE);
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => AboutPage()));
             },
           ),
         ],

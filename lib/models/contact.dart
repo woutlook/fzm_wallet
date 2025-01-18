@@ -26,13 +26,11 @@ class Contact {
   String name;
   String phoneNum;
   List<ContactsAddress>? addressList = [];
-  List<int>? idList;
 
   Contact({
     this.name = '',
     this.phoneNum = '',
     this.addressList,
-    this.idList,
   });
 
   factory Contact.fromJson(Map<String, dynamic> json) {

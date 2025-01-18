@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/pages/wallet/recv_page.dart';
+import 'package:fzm_wallet/pages/wallet/send_page.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import 'package:fzm_wallet/models/const/my_routers.dart';
 import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
@@ -34,10 +35,11 @@ class _TransPageState extends ConsumerState<TransPage>
   }
 
   Widget _build(BuildContext context) {
-    Map<String, dynamic>? arguments =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    var coin = arguments?["coin"] as Coin;
-    final title = '${coin.name}(${coin.nickname})';
+    // Map<String, dynamic>? arguments =
+    //     ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    // var coin = arguments?["coin"] as Coin;
+    final coin = ref.watch(coinProvider);
+    final title = '${coin!.name}(${coin.nickname})';
     final balancer = ref.watch(balanceProvider(coin));
 
     return Scaffold(
@@ -78,7 +80,7 @@ class _TransPageState extends ConsumerState<TransPage>
                   SizedBox(
                     width: 32,
                     height: 32,
-                    child: Image.network(
+                    child: Image.asset(
                       coin.icon ?? "",
                       width: 32,
                       height: 32,
@@ -147,19 +149,27 @@ class _TransPageState extends ConsumerState<TransPage>
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         blackButton('转账', () {
-                          Navigator.pushNamed(context, MyRouter.SEND_PAGE,
-                              arguments: {'coin': coin});
+                          ref.read(coinProvider.notifier).state = coin;
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return const SendPage();
+                          }));
                         }, width: 150),
                         blueButton('收款', () {
-                          Navigator.pushNamed(context, MyRouter.RECV_PAGE,
-                              arguments: {'coin': coin});
+                          ref.read(coinProvider.notifier).state = coin;
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return const RecvPage();
+                          }));
                         }, width: 150),
-                        scanButton(context, (barcodeCapture) {
-                          Navigator.pushNamed(context, MyRouter.SEND_PAGE,
-                              arguments: {
-                                'coin': coin,
-                                // "to": getScanResult(barcodeCapture)
-                              });
+                        scanButton(context, onDetect: (barcodeCapture) {
+                          ref.read(coinProvider.notifier).state = coin;
+                          final to = barcodeCapture.barcodes.first.displayValue;
+                          ref.read(toAddressProvider.notifier).state = to;
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return const SendPage();
+                          }));
                           // todo: scan
                         }, size: 32),
                       ],

@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fzm_wallet/models/const/app_colors.dart';
-import 'package:fzm_wallet/models/const/my_routers.dart';
 import 'package:fzm_wallet/ext/string_ext.dart';
 import 'package:fzm_wallet/models/const/wallet_color.dart';
 import 'package:fzm_wallet/models/wapi.dart';
+import 'package:fzm_wallet/pages/wallet/verify_mnem_page.dart';
+import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
 
-class CreateMnemPage extends StatefulWidget {
+class CreateMnemPage extends ConsumerStatefulWidget {
   const CreateMnemPage({super.key});
 
   @override
-  State<CreateMnemPage> createState() => _CreateMnemPageState();
+  ConsumerState<CreateMnemPage> createState() => _CreateMnemPageState();
 }
 
-class _CreateMnemPageState extends State<CreateMnemPage>
+class _CreateMnemPageState extends ConsumerState<CreateMnemPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   var _tabPosition = 0;
@@ -55,10 +57,11 @@ class _CreateMnemPageState extends State<CreateMnemPage>
   }
 
   Widget _build(BuildContext context) {
-    Map<String, dynamic>? arguments =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    String? name = arguments?["name"];
-    String? password = arguments?["password"];
+    // Map<String, dynamic>? arguments =
+    //     ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final arguments = ref.watch(createWalletParameterProvider);
+    String? name = arguments["name"];
+    String? password = arguments["password"];
 
     return Scaffold(
       appBar: appBar(context, '创建助记词'),
@@ -170,8 +173,14 @@ class _CreateMnemPageState extends State<CreateMnemPage>
           () {
             var mnem = _tabPosition == 0 ? _chineseMnem : _englishMnem;
 
-            Navigator.pushNamed(context, MyRouter.VIREFY_MNEM_PAGE,
-                arguments: {'mnem': mnem, 'name': name, 'password': password});
+            ref.read(createWalletParameterProvider.notifier).state = {
+              'mnem': mnem,
+              'name': name,
+              'password': password,
+            };
+
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => VirefyMnemPage()));
           },
           width: 120,
         ),

@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
     "id": "ethereum",
     "symbol": "eth",
     "name": "Ethereum",
-    "image": "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628",
+    "image": "https://coin-images.coingecko.com/coins/assets/images/279/large/ethereum.png?1696501628",
     "current_price": 2757.47,
     "market_cap": 331691625289,
     "market_cap_rank": 2,

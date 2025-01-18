@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fzm_wallet/models/coin.dart';
 
 import 'package:fzm_wallet/models/contact.dart';
-import 'package:fzm_wallet/models/const/my_routers.dart';
 import 'package:fzm_wallet/models/store.dart';
+import 'package:fzm_wallet/pages/wallet/send_page.dart';
 import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
 
@@ -33,8 +33,7 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
         children: [
           TextField(
             onChanged: (value) {
-              setState(() {
-              });
+              setState(() {});
             },
             controller: _searchController,
             decoration: InputDecoration(
@@ -55,23 +54,28 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
   }
 
   Widget _buildContectsList(wallet) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final contectsList = ref.watch(contectsProvider);
-      final wallet = ref.watch(walletProvider);
-      final coins = wallet.coinList;
-      return ListView.builder(
-        shrinkWrap: true,
-        itemCount: contectsList.length,
-        itemBuilder: (context, index) {
-          final contects = contectsList[index];
-          return _buildContectsItem(context, contects, coins, constraints);
-        },
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contectsList = ref.watch(contectsProvider);
+        final coins = wallet.coinList;
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: contectsList.length,
+          itemBuilder: (context, index) {
+            final contects = contectsList[index];
+            return _buildContectsItem(context, contects, coins, constraints);
+          },
+        );
+      },
+    );
   }
 
   @override
   Widget build(context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(context) {
     return Scaffold(
       appBar: appBar(
         context,
@@ -164,9 +168,10 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
                     ),
                     const Spacer(),
                     IconButton(
-                      onPressed: () {
-                        store.removeContact(contect.name);
-                        setState(() {});
+                      onPressed: () async {
+                        await store.removeContact(contect.name);
+                        ref.invalidate(contectsProvider);
+                        // setState(() {});
                       },
                       icon: const Icon(
                         Icons.delete,
@@ -294,15 +299,17 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
       }
       _contect!.addressList![i].address = _addressControllerList[i].text;
     }
-    // final wallet = ref.read(walletProvider);
-    // await updateContects(contects: _contect!, walletId: wallet.id!);
-    // ref.invalidate(contectsProvider(wallet.id!));
-    // ref.read(contectsProvider.notifier).state = _contect;
+    await store.updateContact('', _contect!);
+    ref.invalidate(contectsProvider);
     return true;
   }
 
   @override
   Widget build(context) {
+    return buildLayout(context, child: _build(context));
+  }
+
+  Widget _build(context) {
     final wallet = ref.watch(walletProvider);
     final filterCoins = wallet.coinList;
     final coinItems = filterCoins.map((e) {
@@ -416,11 +423,15 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
               LayoutBuilder(builder: (context, filterCoins) {
                 return widget.isEdit
                     ? blackButton('去转账', () {
-                        final address =
+                        final to =
                             _contect?.addressList?[_selectedIndex].address ??
-                                "";
-                        Navigator.pushNamed(context, MyRouter.SEND_PAGE,
-                            arguments: {'coin': _coin, 'address': address});
+                                '';
+                        ref.read(toAddressProvider.notifier).state = to;
+                        ref.read(coinProvider.notifier).state = _coin;
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return const SendPage();
+                        }));
                       })
                     : blueButton('添加地址', () {
                         Scaffold.of(context).openEndDrawer();
@@ -482,10 +493,12 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
                             ? Row(
                                 children: [
                                   scanButton(context, size: 12,
-                                      (barcodeCapture) {
+                                      onDetect: (barcodeCapture) {
+                                    final address = barcodeCapture
+                                        .barcodes.first.displayValue;
                                     setState(() {
-                                      // _addressControllerList[index].text =
-                                      //     getScanResult(barcodeCapture) ?? '';
+                                      _addressControllerList[index].text =
+                                          address ?? '';
                                     });
                                   }),
                                   IconButton(

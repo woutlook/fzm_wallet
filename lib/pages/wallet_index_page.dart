@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
-import 'package:fzm_wallet/models/const/my_routers.dart';
+import 'package:fzm_wallet/pages/wallet/create_wallet_page.dart';
+import 'package:fzm_wallet/pages/wallet/import_wallet_page.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
 
 class WalletIndexPage extends StatefulWidget {
@@ -35,7 +36,7 @@ class _WalletIndexPage extends State<WalletIndexPage> {
             const Align(
                 alignment: Alignment.topLeft,
                 child: Text(
-                  "区块链账户",
+                  "区块链钱包",
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -49,17 +50,23 @@ class _WalletIndexPage extends State<WalletIndexPage> {
                         shape: WidgetStateProperty.all(RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)))),
                     onPressed: () {
-                      Navigator.pushNamed(context, MyRouter.CREATE_WALLET_PAGE);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => CreateWalletPage()));
                     },
                     child: Text(
-                      "创建账户",
+                      "创建钱包",
                       style: TextStyle(color: AppColors.gray33),
                     )),
                 Padding(
                   padding: const EdgeInsets.only(left: 20),
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, MyRouter.IMPORT_WALLET_PAGE);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ImportWalletPage()));
                     },
                     style: ButtonStyle(
                         backgroundColor:
@@ -68,7 +75,8 @@ class _WalletIndexPage extends State<WalletIndexPage> {
                             const RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(20))))),
-                    child: const Text("导入账户"),
+                    child: const Text("导入钱包",
+                        style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

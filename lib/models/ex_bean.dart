@@ -1,11 +1,11 @@
-import 'dart:convert';
+// import 'dart:convert';
 
-ExBean exBeanFromJson(String str) => ExBean.fromJson(json.decode(str));
+// ExItem exBeanFromJson(String str) => ExItem.fromJson(json.decode(str));
 
-String exBeanToJson(ExBean data) => json.encode(data.toJson());
+// String exBeanToJson(ExItem data) => json.encode(data.toJson());
 
-class ExBean {
-  ExBean({
+class ExItem {
+  ExItem({
     this.id,
     this.name,
     this.style,
@@ -13,7 +13,7 @@ class ExBean {
     this.apps,
   });
 
-  ExBean.fromJson(dynamic json) {
+  ExItem.fromJson(dynamic json) {
     id = json['id'];
     name = json['name'];
     style = json['style'];
@@ -21,7 +21,7 @@ class ExBean {
     if (json['apps'] != null) {
       apps = [];
       json['apps'].forEach((v) {
-        apps?.add(Apps.fromJson(v));
+        apps?.add(AppItem.fromJson(v));
       });
     }
   }
@@ -30,16 +30,16 @@ class ExBean {
   String? name;
   int? style;
   int? status;
-  List<Apps>? apps;
+  List<AppItem>? apps;
 
-  ExBean copyWith({
+  ExItem copyWith({
     int? id,
     String? name,
     int? style,
     int? status,
-    List<Apps>? apps,
+    List<AppItem>? apps,
   }) =>
-      ExBean(
+      ExItem(
         id: id ?? this.id,
         name: name ?? this.name,
         style: style ?? this.style,
@@ -60,12 +60,12 @@ class ExBean {
   }
 }
 
-Apps appsFromJson(String str) => Apps.fromJson(json.decode(str));
+// AppItem appsFromJson(String str) => AppItem.fromJson(json.decode(str));
 
-String appsToJson(Apps data) => json.encode(data.toJson());
+// String appsToJson(AppItem data) => json.encode(data.toJson());
 
-class Apps {
-  Apps({
+class AppItem {
+  AppItem({
     this.id,
     this.name,
     this.icon,
@@ -77,7 +77,7 @@ class Apps {
     this.realName,
   });
 
-  Apps.fromJson(dynamic json) {
+  AppItem.fromJson(dynamic json) {
     id = json['id'];
     name = json['name'];
     icon = json['icon'];
@@ -99,7 +99,7 @@ class Apps {
   int? phone;
   int? realName;
 
-  Apps copyWith({
+  AppItem copyWith({
     int? id,
     String? name,
     String? icon,
@@ -110,7 +110,7 @@ class Apps {
     int? phone,
     int? realName,
   }) =>
-      Apps(
+      AppItem(
         id: id ?? this.id,
         name: name ?? this.name,
         icon: icon ?? this.icon,

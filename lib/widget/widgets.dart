@@ -206,13 +206,15 @@ AppBar appBar(
   );
 }
 
-Widget scanButton(context, Function(BarcodeCapture) onDetect,
-    {double size = 32, color = Colors.black}) {
+Widget scanButton(context,
+    {required Function(BarcodeCapture) onDetect,
+    double size = 32,
+    color = Colors.black}) {
   return InkWell(
     onTap: () {
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => Scan(onScan: onDetect),
+          builder: (context) => ScanPage(onScan: onDetect),
         ),
       );
     },
@@ -220,7 +222,7 @@ Widget scanButton(context, Function(BarcodeCapture) onDetect,
       width: size,
       height: size,
       child: Image.asset(
-        "images/home_top_left.png",
+        "assets/images/home_top_left.png",
       ),
     ),
   );
@@ -259,7 +261,7 @@ Widget multLinesInput(controller, hintText,
               margin: const EdgeInsets.only(top: 10, bottom: 10),
               alignment: Alignment.center,
               child: Text(
-                "账户支持导入所有遵循BIP标准生成的助记词",
+                "钱包支持导入所有遵循BIP标准生成的助记词",
                 style: TextStyle(color: AppColors.button, fontSize: 14),
               ),
             )

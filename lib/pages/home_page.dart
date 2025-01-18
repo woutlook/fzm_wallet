@@ -1,10 +1,12 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fzm_wallet/models/coin.dart';
 
-import 'package:fzm_wallet/models/const/my_routers.dart';
 import 'package:fzm_wallet/pages/wallet/coin_item.dart';
+import 'package:fzm_wallet/pages/wallet/my_wallets_page.dart';
+import 'package:fzm_wallet/pages/wallet/send_page.dart';
+import 'package:fzm_wallet/pages/wallet/tx_page.dart';
 import 'package:fzm_wallet/pages/wallet/wallet_details_page.dart';
 import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
@@ -17,8 +19,6 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  void _handleScan(barcodeCapture) {}
-
   @override
   Widget build(BuildContext context) {
     return buildLayout(context, child: _build(context));
@@ -30,13 +30,21 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: appBar(context, wallet.typeString(),
-          leading: scanButton(context, _handleScan),
+          leading: scanButton(context, onDetect: (barcodeCapture) {
+            ref.read(coinProvider.notifier).state =
+                nativeCoinList[0]; // default coin is BTY
+            final to = barcodeCapture.barcodes.first.displayValue;
+            ref.read(toAddressProvider.notifier).state = to;
+            Navigator.push(context, MaterialPageRoute(builder: (context) {
+              return const SendPage();
+            }));
+          }),
           trailing: InkWell(
             onTap: () {
               gotoMyWallets();
             },
             child: const Image(
-              image: AssetImage("images/home_top_wallet.png"),
+              image: AssetImage("assets/images/home_top_wallet.png"),
               width: 32,
               height: 32,
             ),
@@ -50,23 +58,28 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: Stack(
                 children: [
                   const Image(
-                    image: AssetImage("images/header_wallet_hd_wallet.png"),
+                    image:
+                        AssetImage("assets/images/header_wallet_hd_wallet.png"),
+                    fit: BoxFit.cover,
                   ),
                   Container(
                     padding: const EdgeInsets.only(
-                        left: 20, top: 20, right: 14, bottom: 20),
-                    height: 125,
+                        left: 20, top: 10, right: 14, bottom: 20),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              "钱包名称",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 18),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              child: Text(
+                                wallet.name,
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 40),
+                              ),
                             ),
+                            const Spacer(),
                             InkWell(
                               onTap: () async {
                                 await Navigator.of(context).push(
@@ -96,7 +109,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 padding: const EdgeInsets.only(right: 5),
                                 child: const Image(
                                   image: AssetImage(
-                                      "images/header_wallet_more.png"),
+                                      "assets/images/header_wallet_more.png"),
                                   height: 22,
                                   width: 22,
                                 ),
@@ -104,29 +117,42 @@ class _HomePageState extends ConsumerState<HomePage> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 10),
+                        const Divider(
+                          color: Colors.white30,
+                          height: 1,
+                        ),
+                        const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              wallet.name,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 22),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              child: Text(
+                                '总资产:  0.00 \$',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 32),
+                              ),
                             ),
                             InkWell(
                               onTap: () async {
-                                await Navigator.pushNamed(
-                                    context, MyRouter.ADD_TAB_PAGE);
+                                await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const WalletDetailsPage()));
                                 setState(() {});
                               },
                               child: const Image(
-                                image:
-                                    AssetImage("images/header_wallet_add.png"),
+                                image: AssetImage(
+                                    "assets/images/header_wallet_add.png"),
                                 height: 35,
                                 width: 35,
                               ),
                             ),
                           ],
                         ),
+                        // const SizedBox(height: 30),
                       ],
                     ),
                   ),
@@ -139,12 +165,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                 itemBuilder: (context, i) => InkWell(
                   child: CoinItem(coins[i]),
                   onTap: () {
-                    var item = coins[i];
-                    Navigator.pushNamed(
-                      context,
-                      MyRouter.TRANS_PAGE,
-                      arguments: {"coin": item},
-                    );
+                    final coin = coins[i];
+                    ref.read(coinProvider.notifier).state = coin;
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return const TransPage();
+                    }));
                   },
                 ),
               ),
@@ -156,12 +182,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> gotoMyWallets() async {
-    var result = await Navigator.pushNamed(context, MyRouter.MY_WALLETS_PAGE);
+    final result = await Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const MyWalletsPage()));
     if (result == null) {
       return;
     }
-    // final wallet = result as PwalletBean;
-    // ref.read(walletProvider.notifier).updateWallet(wallet);
-    // ref.read(coinsProvider.notifier).updateWalletCoins(wallet);
   }
 }

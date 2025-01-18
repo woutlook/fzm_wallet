@@ -6,13 +6,12 @@ import 'package:fzm_wallet/models/store.dart';
 
 import 'package:fzm_wallet/models/tx.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
-import 'package:fzm_wallet/models/const/my_routers.dart';
 import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/pages/my/contects.dart';
 import 'package:fzm_wallet/pages/wallet/wallet_item.dart';
 import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
-// import 'package:fzm_wallet/widget/.dart';
 
 class SendPage extends ConsumerStatefulWidget {
   const SendPage({super.key});
@@ -35,12 +34,10 @@ class _SendPageState extends ConsumerState<SendPage> {
   }
 
   Widget _build(BuildContext context) {
-    Map<String, dynamic>? arguments =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final coin = arguments?['coin'] as Coin;
-    final address = arguments?['address'] as String?;
-    _addressController.text = address ?? '';
-    final title = '${coin.name}(${coin.nickname})转账';
+    final coin = ref.watch(coinProvider);
+    final toAddress = ref.watch(toAddressProvider);
+    _addressController.text = toAddress ?? '';
+    final title = '${coin!.name}(${coin.nickname})转账';
     final wallet = ref.watch(walletProvider);
     final balance = ref.watch(balanceProvider(coin));
     balance.when(
@@ -76,31 +73,23 @@ class _SendPageState extends ConsumerState<SendPage> {
               children: [
                 const Text(
                   '收款方',
-                  style: TextStyle(fontSize: 20),
+                  style: TextStyle(fontSize: 16),
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.account_balance_wallet),
-                  onPressed: () async {
-                    final address = await _showBottomDrawer(context, coin);
-                    setState(() {
-                      _addressController.text = address;
-                    });
-                  },
-                ),
-                IconButton(
                   icon: const Icon(Icons.contacts),
                   onPressed: () async {
-                    await Navigator.of(context).pushNamed(
-                        MyRouter.CONTECTS_PAGE,
-                        arguments: {'coin': coin});
+                    await Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return const MyContactsPage();
+                    }));
                   },
                 ),
                 const SizedBox(width: 10),
-                scanButton(context, size: 24, (barcodeCapture) {
+                scanButton(context, size: 24, onDetect: (barcodeCapture) {
+                  final result = barcodeCapture.barcodes.first.displayValue;
                   setState(() {
-                    // final address = getScanResult(barcodeCapture);
-                    // _addressController.text = address ?? '';
+                    _addressController.text = result ?? '';
                   });
                 }),
               ],
@@ -114,10 +103,6 @@ class _SendPageState extends ConsumerState<SendPage> {
                 hintText: '请输入收款方地址',
                 filled: true,
                 fillColor: Colors.white60,
-                // focusedBorder: OutlineInputBorder(
-                //   borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                //   borderSide: BorderSide(color: Colors.blue),
-                // ),
                 hintStyle: TextStyle(color: Colors.grey),
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
@@ -137,12 +122,12 @@ class _SendPageState extends ConsumerState<SendPage> {
               children: [
                 const Text(
                   '发送数量',
-                  style: TextStyle(fontSize: 20),
+                  style: TextStyle(fontSize: 16),
                 ),
                 const Spacer(),
                 Text(
                   '$_balance ${coin.chain}',
-                  style: const TextStyle(color: Colors.blue, fontSize: 20),
+                  style: const TextStyle(color: Colors.blue, fontSize: 16),
                 )
               ],
             ),
@@ -177,12 +162,12 @@ class _SendPageState extends ConsumerState<SendPage> {
               children: [
                 const Text(
                   '矿工费',
-                  style: TextStyle(fontSize: 20),
+                  style: TextStyle(fontSize: 16),
                 ),
                 const Spacer(),
                 Text(
-                  '${_setFee ?? setFee} ${coin.chain}',
-                  style: const TextStyle(color: Colors.black, fontSize: 20),
+                  '${(_setFee ?? setFee).toStringAsFixed(5)} ${coin.chain}',
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
                 )
               ],
             ),
@@ -192,8 +177,9 @@ class _SendPageState extends ConsumerState<SendPage> {
                   value: _setFee ?? setFee,
                   min: min,
                   max: max,
-                  divisions: 100,
-                  label: _setFee.toString(),
+                  divisions: 10,
+                  label:
+                      _setFee?.toStringAsFixed(5) ?? setFee.toStringAsFixed(5),
                   onChanged: (value) {
                     setState(() {
                       _setFee = value;
@@ -229,14 +215,14 @@ class _SendPageState extends ConsumerState<SendPage> {
     final remarkCard = Card(
       color: Colors.white.withAlpha(225),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.only(left: 16.0),
         child: Column(
           children: [
             Row(
               children: [
                 const Text(
                   '上链备注（选填）',
-                  style: TextStyle(fontSize: 20),
+                  style: TextStyle(fontSize: 16),
                 ),
                 IconButton(
                   icon: const Icon(Icons.help_outline),
@@ -263,7 +249,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                 const Spacer(),
               ],
             ),
-            const SizedBox(height: 16),
+            // const SizedBox(height: 8),
             TextField(
               controller: _remarkController,
               decoration: const InputDecoration(
@@ -316,6 +302,7 @@ class _SendPageState extends ConsumerState<SendPage> {
         ),
       ),
     );
+    final from = wallet.getAccountAddress(chain: coin.chain);
     return Scaffold(
       appBar: appBar(context, title),
       body: SingleChildScrollView(
@@ -323,25 +310,46 @@ class _SendPageState extends ConsumerState<SendPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                const Spacer(),
-                Text(
-                  wallet.name,
-                  style: const TextStyle(fontSize: 20),
-                ),
-                const SizedBox(width: 16),
-              ],
+            Padding(
+              padding: const EdgeInsets.only(left: 20.0),
+              child: Row(
+                children: [
+                  Text(
+                    '${wallet.name}: ',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    formatAddress(from),
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.account_balance_wallet),
+                    onPressed: () async {
+                      final wallet = await _showBottomDrawer(context, coin);
+                      if (wallet == null) {
+                        return;
+                      }
+                      ref.read(walletProvider.notifier).updateWallet(wallet);
+                      setState(() {});
+                    },
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
             addressCard,
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             amountCard,
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             feeCard,
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             remarkCard,
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             button,
             // const Expanded(
             //   child: Center(),
@@ -352,9 +360,9 @@ class _SendPageState extends ConsumerState<SendPage> {
     );
   }
 
-  Future<String> _showBottomDrawer(context, Coin coin) async {
+  Future<Wallet?> _showBottomDrawer(context, Coin coin) async {
     final wallets = store.getWalletList();
-    final address = await showModalBottomSheet<String>(
+    final rwallet = await showModalBottomSheet<Wallet>(
       context: context,
       builder: (BuildContext context) {
         return Container(
@@ -377,8 +385,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                   children: [
                     const SizedBox(height: 10),
                     Row(
-                      mainAxisSize: MainAxisSize
-                          .min, // 设置 mainAxisSize 为 MainAxisSize.min
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const SizedBox(width: 50),
                         Text(
@@ -392,7 +399,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                           style:
                               TextStyle(fontSize: 13, color: AppColors.gray8e),
                         ),
-                        const Spacer(),
+                        // const Spacer(),
                       ],
                     ),
                     const SizedBox(height: 15),
@@ -402,9 +409,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                       children: [
                         const SizedBox(width: 50),
                         Text(
-                          address.length > 34
-                              ? '${address.substring(0, 18)}...${address.substring(address.length - 16)}'
-                              : address,
+                          formatAddress(address, start: 18, end: 16),
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.gray8e,
@@ -418,7 +423,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                 return Padding(
                   padding: const EdgeInsets.only(top: 20),
                   child: WalletItem(wgt, () {
-                    Navigator.of(context).pop(address);
+                    Navigator.of(context).pop(wallet);
                   }, name: wallet.name),
                 );
               });
@@ -427,7 +432,7 @@ class _SendPageState extends ConsumerState<SendPage> {
         );
       },
     );
-    return address ?? '';
+    return rwallet;
   }
 
   void _transfer(Coin coin, Wallet wallet, String password) async {
@@ -461,40 +466,19 @@ class _SendPageState extends ConsumerState<SendPage> {
         password: password,
         note: note);
 
-    // // 显示对话框
-    // showDialog(
-    //   context: context,
-    //   barrierDismissible: false,
-    //   builder: (BuildContext context) {
-    //     return const AlertDialog(
-    //       content: Row(
-    //         children: [
-    //           CircularProgressIndicator(),
-    //           SizedBox(width: 20),
-    //           Text('正在发送交易，请等待...'),
-    //         ],
-    //       ),
-    //     );
-    //   },
-    // );
     EasyLoading.show(status: '正在发送交易，请等待...');
 
-    // 监听交易结果
-    ref.read(sendTxProvider(txArgs)).when(
-      data: (result) {
-        // Navigator.of(context).pop(); // 关闭对话框
-        EasyLoading.dismiss();
-        toast('交易成功');
-      },
-      loading: () {
-        // 这里可以选择不做任何操作，因为对话框已经显示
-      },
-      error: (error, stackTrace) {
-        // Navigator.of(context).pop(); // 关闭对话框
-        EasyLoading.dismiss();
-        toast('交易失败: $error');
-      },
-    );
+    ref.watch(sendTxProvider(txArgs)).when(
+          data: (result) {
+            EasyLoading.dismiss();
+            toast('交易成功');
+          },
+          loading: () {},
+          error: (error, stackTrace) {
+            EasyLoading.dismiss();
+            toast('交易失败: $error');
+          },
+        );
   }
 
   String? _checkAddress(String addrStr) {

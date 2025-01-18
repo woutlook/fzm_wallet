@@ -30,10 +30,13 @@ class TabCategory {
   });
 
   factory TabCategory.fromJson(Map<String, dynamic> json) {
-    return TabCategory(
+    final items =
+        (json['items'] as List).map((e) => Coin.fromNetwork(e)).toList();
+    final t = TabCategory(
       name: json['name'],
-      items: (json['items'] as List).map((e) => Coin.fromJson(e)).toList(),
+      items: items.isEmpty ? [] : items,
     );
+    return t;
   }
 }
 
@@ -51,7 +54,7 @@ class SearchCoinData {
   factory SearchCoinData.fromJson(Map<String, dynamic> json) {
     return SearchCoinData(
       code: json['code'],
-      data: (json['data'] as List).map((e) => Coin.fromJson(e)).toList(),
+      data: (json['data'] as List).map((e) => Coin.fromNetwork(e)).toList(),
       msg: json['msg'],
     );
   }
