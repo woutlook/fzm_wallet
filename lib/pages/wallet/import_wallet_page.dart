@@ -66,8 +66,7 @@ class _ImportWalletPageState extends State<ImportWalletPage>
         context,
         '导入钱包',
         trailing: scanButton(context, size: 28, onDetect: (barcodeCaptrue) {
-          // TODO: scan private key
-          final result = barcodeCaptrue.barcodes.first.displayValue;
+          final result = barcodeCaptrue.barcodes.first.rawValue;
           setState(() {
             _privOrAddrController.text = result ?? '';
           });

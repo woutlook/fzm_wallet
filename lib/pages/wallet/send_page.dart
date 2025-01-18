@@ -87,7 +87,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                 ),
                 const SizedBox(width: 10),
                 scanButton(context, size: 24, onDetect: (barcodeCapture) {
-                  final result = barcodeCapture.barcodes.first.displayValue;
+                  final result = barcodeCapture.barcodes.first.rawValue;
                   setState(() {
                     _addressController.text = result ?? '';
                   });

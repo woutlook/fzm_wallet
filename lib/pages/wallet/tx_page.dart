@@ -164,7 +164,7 @@ class _TransPageState extends ConsumerState<TransPage>
                         }, width: 150),
                         scanButton(context, onDetect: (barcodeCapture) {
                           ref.read(coinProvider.notifier).state = coin;
-                          final to = barcodeCapture.barcodes.first.displayValue;
+                          final to = barcodeCapture.barcodes.first.rawValue;
                           ref.read(toAddressProvider.notifier).state = to;
                           Navigator.push(context,
                               MaterialPageRoute(builder: (context) {

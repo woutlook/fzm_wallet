@@ -494,8 +494,8 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
                                 children: [
                                   scanButton(context, size: 12,
                                       onDetect: (barcodeCapture) {
-                                    final address = barcodeCapture
-                                        .barcodes.first.displayValue;
+                                    final address =
+                                        barcodeCapture.barcodes.first.rawValue;
                                     setState(() {
                                       _addressControllerList[index].text =
                                           address ?? '';

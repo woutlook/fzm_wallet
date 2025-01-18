@@ -33,7 +33,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           leading: scanButton(context, onDetect: (barcodeCapture) {
             ref.read(coinProvider.notifier).state =
                 nativeCoinList[0]; // default coin is BTY
-            final to = barcodeCapture.barcodes.first.displayValue;
+            final to = barcodeCapture.barcodes.first.rawValue;
             ref.read(toAddressProvider.notifier).state = to;
             Navigator.push(context, MaterialPageRoute(builder: (context) {
               return const SendPage();
