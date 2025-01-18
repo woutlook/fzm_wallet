@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/models/wallet.dart';
 import 'package:fzm_wallet/pages/wallet/recv_page.dart';
 import 'package:fzm_wallet/pages/wallet/send_page.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -147,6 +148,10 @@ class _TransPageState extends ConsumerState<TransPage>
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         blackButton('转账', () {
+                          if (wallet.type == WalletType.address) {
+                            toast('地址钱包不支持转账');
+                            return;
+                          }
                           ref.read(coinProvider.notifier).state = coin;
                           Navigator.push(context,
                               MaterialPageRoute(builder: (context) {

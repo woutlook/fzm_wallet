@@ -5,8 +5,10 @@ import 'package:fzm_wallet/models/coin.dart';
 
 import 'package:fzm_wallet/models/contact.dart';
 import 'package:fzm_wallet/models/store.dart';
+import 'package:fzm_wallet/models/wallet.dart';
 import 'package:fzm_wallet/pages/wallet/send_page.dart';
 import 'package:fzm_wallet/provider/p.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
 
 class MyContactsPage extends ConsumerStatefulWidget {
@@ -423,6 +425,10 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
               LayoutBuilder(builder: (context, filterCoins) {
                 return widget.isEdit
                     ? blackButton('去转账', () {
+                        if (wallet.type == WalletType.address) {
+                          toast('地址钱包不支持转账');
+                          return;
+                        }
                         final to =
                             _contect?.addressList?[_selectedIndex].address ??
                                 '';
