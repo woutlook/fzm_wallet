@@ -195,8 +195,8 @@ class Chain33Api extends WApi {
   }
 
   Transaction _createTx({required TokenTxArgs args}) {
-    final bigIntAmount = _toBigInt(args.amount, args.token.decimals!);
-    final bigIntFee = _toBigInt(args.fee ?? 0, args.token.decimals!);
+    final bigIntAmount = _toBigInt(args.amount, config.decimals);
+    final bigIntFee = _toBigInt(args.fee ?? 0, config.decimals);
     if (args.token.chain == YCC || args.token.chain == BTY) {
       final action = CoinsAction(
         transfer: AssetsTransfer(
@@ -322,7 +322,7 @@ class Chain33Api extends WApi {
       throw Exception('Failed to get tx by hash: $err');
     }
     final result = resp['result'];
-    final tx= result['tx'];
+    final tx = result['tx'];
     final symbol = config.nativeToken;
     return Tx(
       tokenSymbol: symbol,

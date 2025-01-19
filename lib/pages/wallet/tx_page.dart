@@ -150,16 +150,18 @@ class _TransPageState extends ConsumerState<TransPage>
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        blackButton('转账', () {
+                        blackButton('转账', () async {
                           if (wallet.type == WalletType.address) {
                             toast('地址钱包不支持转账');
                             return;
                           }
                           ref.read(coinProvider.notifier).state = coin;
-                          Navigator.push(context,
+                          await Navigator.push(context,
                               MaterialPageRoute(builder: (context) {
                             return const SendPage();
                           }));
+                          ref.invalidate(txListProvider(coin));
+                          setState(() {});
                         }, width: 150),
                         blueButton('收款', () {
                           ref.read(coinProvider.notifier).state = coin;

@@ -7,6 +7,7 @@ import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/tx.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/models/wapi.dart';
 import 'package:fzm_wallet/pages/my/contacts.dart';
 import 'package:fzm_wallet/pages/wallet/wallet_item.dart';
 import 'package:fzm_wallet/provider/p.dart';
@@ -55,6 +56,7 @@ class _SendPageState extends ConsumerState<SendPage> {
         data: (data) {
           setState(() {
             _fee = data;
+            _setFee = _fee.average;
           });
         },
         loading: () {},
@@ -77,6 +79,17 @@ class _SendPageState extends ConsumerState<SendPage> {
                 ),
                 const Spacer(),
                 IconButton(
+                  icon: const Icon(Icons.account_balance_wallet),
+                  onPressed: () async {
+                    final address = await _showBottomDrawer(context, coin);
+                    if (address == null) {
+                      return;
+                    }
+                    ref.read(toAddressProvider.notifier).state = address;
+                    setState(() {});
+                  },
+                ),
+                IconButton(
                   icon: const Icon(Icons.contacts),
                   onPressed: () async {
                     await Navigator.push(context,
@@ -88,9 +101,8 @@ class _SendPageState extends ConsumerState<SendPage> {
                 const SizedBox(width: 10),
                 scanButton(context, size: 24, onDetect: (barcodeCapture) {
                   final result = barcodeCapture.barcodes.first.rawValue;
-                  setState(() {
-                    _addressController.text = result ?? '';
-                  });
+                  ref.read(toAddressProvider.notifier).state = result;
+                  setState(() {});
                 }),
               ],
             ),
@@ -293,7 +305,7 @@ class _SendPageState extends ConsumerState<SendPage> {
             if (password == null) {
               return;
             }
-            _transfer(coin, wallet, password);
+            await _transfer(coin, wallet, password);
           },
           child: const Text(
             '确认转账',
@@ -327,17 +339,6 @@ class _SendPageState extends ConsumerState<SendPage> {
                         color: Colors.blue),
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.account_balance_wallet),
-                    onPressed: () async {
-                      final wallet = await _showBottomDrawer(context, coin);
-                      if (wallet == null) {
-                        return;
-                      }
-                      ref.read(walletProvider.notifier).updateWallet(wallet);
-                      setState(() {});
-                    },
-                  ),
                 ],
               ),
             ),
@@ -360,9 +361,9 @@ class _SendPageState extends ConsumerState<SendPage> {
     );
   }
 
-  Future<Wallet?> _showBottomDrawer(context, Coin coin) async {
+  Future<String?> _showBottomDrawer(context, Coin coin) async {
     final wallets = store.getWalletList();
-    final rwallet = await showModalBottomSheet<Wallet>(
+    final rwallet = await showModalBottomSheet<String>(
       context: context,
       builder: (BuildContext context) {
         return Container(
@@ -423,7 +424,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                 return Padding(
                   padding: const EdgeInsets.only(top: 20),
                   child: WalletItem(wgt, () {
-                    Navigator.of(context).pop(wallet);
+                    Navigator.of(context).pop(address);
                   }, name: wallet.name),
                 );
               });
@@ -435,7 +436,7 @@ class _SendPageState extends ConsumerState<SendPage> {
     return rwallet;
   }
 
-  void _transfer(Coin coin, Wallet wallet, String password) async {
+  Future<void> _transfer(Coin coin, Wallet wallet, String password) async {
     if (wallet.type == WalletType.address) {
       return;
     }
@@ -458,27 +459,27 @@ class _SendPageState extends ConsumerState<SendPage> {
 
     final note = _remarkController.text;
     final fee = _setFee;
-    final txArgs = TxArgs(
-        coin: coin,
-        to: to,
-        amount: amount,
-        fee: fee!,
-        password: password,
-        note: note);
+    final targs = TokenTxArgs(
+      token: coin,
+      to: to,
+      amount: amount,
+      fee: fee,
+      note: note,
+    );
+    final priv = await wallet.getAccountPrivateKey(
+        chain: coin.chain, password: password);
 
     EasyLoading.show(status: '正在发送交易，请等待...');
-
-    ref.watch(sendTxProvider(txArgs)).when(
-          data: (result) {
-            EasyLoading.dismiss();
-            toast('交易成功');
-          },
-          loading: () {},
-          error: (error, stackTrace) {
-            EasyLoading.dismiss();
-            toast('交易失败: $error');
-          },
-        );
+    final tx = await walletApi.sendToken(privateKey: priv, args: targs);
+    EasyLoading.dismiss();
+    if (mounted) {
+      if (tx == null) {
+        toast('发送交易失败');
+        return;
+      }
+      toast('发送交易成功');
+      Navigator.pop(context, tx);
+    }
   }
 
   String? _checkAddress(String addrStr) {
