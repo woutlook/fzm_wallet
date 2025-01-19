@@ -65,9 +65,6 @@ final balanceProvider =
     final wallet = ref.watch(walletProvider);
     final chain = coin.chain;
     final who = wallet.getAccountAddress(chain: chain);
-    if (coin.contract == null || coin.contract!.isEmpty) {
-      return 0.0;
-    }
     final balance = await walletApi.getBalance(
         who: who,
         chain: chain,

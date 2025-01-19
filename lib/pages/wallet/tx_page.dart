@@ -353,8 +353,11 @@ class _TransPageState extends ConsumerState<TransPage>
     return txlistP.when(
         data: (list) {
           if (index == 1) {
-            list =
-                list.where((tx) => tx.from.toLowerCase() == address).toList();
+            list = list
+                .where((tx) =>
+                    tx.from.toLowerCase() == address &&
+                    tx.to.toLowerCase() != address)
+                .toList();
           } else if (index == 2) {
             list = list.where((tx) => tx.to.toLowerCase() == address).toList();
           }
@@ -365,7 +368,12 @@ class _TransPageState extends ConsumerState<TransPage>
               itemBuilder: (context, index) {
                 final tx = list[index];
                 return _buildTxListItem(
-                    context, index, tx, coin, tx.from.toLowerCase() == address);
+                    context,
+                    index,
+                    tx,
+                    coin,
+                    tx.to.toLowerCase() != address &&
+                        tx.from.toLowerCase() == address);
               },
             ),
           );

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:fzm_wallet/models/tx.dart';
 import 'package:fzm_wallet/models/contact.dart';
 import 'package:fzm_wallet/pages/my/contacts.dart';
 import 'package:fzm_wallet/pages/webview_page.dart';
+import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
 
 class TxDetailsPage extends StatelessWidget {
@@ -134,10 +136,8 @@ class TxDetailsPage extends StatelessWidget {
               ? IconButton(
                   icon: const Icon(Icons.copy, size: 16),
                   onPressed: () {
-                    // 复制到剪贴板的逻辑
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('已复制')),
-                    );
+                    Clipboard.setData(ClipboardData(text: value));
+                    toast('$label 已复制');
                   },
                 )
               : const SizedBox(

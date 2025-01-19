@@ -63,10 +63,14 @@ class Chain33Api extends WApi {
     final txInfos = result['txInfos'];
     final hashs = txInfos.map((tx) => tx['hash']).toList();
     final list = hashs.map((hash) async {
-      final tx = await _getTx(hash, client);
-      return tx;
+      try {
+        final tx = await _getTx(hash, client);
+        return tx;
+      } catch (e) {
+        return null;
+      }
     }).toList();
-    return list;
+    return list.where((tx) => tx != null).toList();
   }
 
   // Tx? _fromChain33Tx(Transaction tx, String hash) {
@@ -122,11 +126,15 @@ class Chain33Api extends WApi {
     final txInfos = result['txInfos'];
     final txHashs =
         txInfos.map((tx) => tx['hash']).where((hash) => hash != null).toList();
-    final list = await Future.wait<Tx>(txHashs.map<Future<Tx>>((hash) async {
-      final tx = await _getTx(hash, client);
-      return tx;
+    final list = await Future.wait<Tx?>(txHashs.map<Future<Tx?>>((hash) async {
+      try {
+        final tx = await _getTx(hash, client);
+        return tx;
+      } catch (e) {
+        return null;
+      }
     }).toList());
-    return list;
+    return list.whereType<Tx>().toList();
   }
 
   @override
@@ -323,6 +331,12 @@ class Chain33Api extends WApi {
     }
     final result = resp['result'];
     final tx = result['tx'];
+    if (tx == null) {
+      throw Exception('Failed to get tx by hash');
+    }
+    if (tx['execer'] != 'coins') {
+      throw Exception('Unsupported execer');
+    }
     final symbol = config.nativeToken;
     return Tx(
       tokenSymbol: symbol,
