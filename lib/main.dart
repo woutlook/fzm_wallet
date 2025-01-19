@@ -52,7 +52,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     // if (!Platform.isMacOS) {
     //   // Permission.camera.request();
     // }
-    // 钱包状态初始化
     final passwordHash = store.getPasswordHash();
     if (passwordHash == null) {
       _home = const SetPasswordPage();
@@ -62,7 +61,6 @@ class _MyAppState extends ConsumerState<MyApp> {
         final lists = store.getWalletList();
         if (lists.isNotEmpty) {
           currentWallet = store.getWallet(lists[0]);
-          // 在 initState 中更新 provider
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ref.read(walletProvider.notifier).updateWallet(currentWallet!);
           });
@@ -73,7 +71,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     }
   }
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     final botToastBuilder = BotToastInit();
@@ -84,46 +81,13 @@ class _MyAppState extends ConsumerState<MyApp> {
         primaryColor: Colors.white,
         scaffoldBackgroundColor: Colors.white30,
         inputDecorationTheme: const InputDecorationTheme(
-          // 修改下划线的颜色
           focusedBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
           ),
         ),
-        // 修改光标的颜色
         cardColor: Colors.green,
       ),
       home: _home,
-      // onGenerateRoute: (settings) {
-      //   return MaterialPageRoute(
-      //     builder: (context) {
-      //       return HomePage();
-      //     },
-      //   );
-      // },
-
-      // routes: {
-      //   MyRouter.DOWNLOAD_PAGE: (context) => const DownLoadPage(),
-      //   MyRouter.LANG_PAGE: (context) => const LangPage(),
-      //   MyRouter.WALLET_INDEX_PAGE: (context) => const WalletIndexPage(),
-      //   MyRouter.CREATE_WALLET_PAGE: (context) => const CreateWalletPage(),
-      //   MyRouter.IMPORT_WALLET_PAGE: (context) => const ImportWalletPage(),
-      //   MyRouter.CREATE_MNEM_PAGE: (context) => const CreateMnemPage(),
-      //   MyRouter.VIREFY_MNEM_PAGE: (context) => const VirefyMnemPage(),
-      //   MyRouter.MY_WALLETS_PAGE: (context) => const MyWalletsPage(),
-      //   MyRouter.MAIN_TAB_PAGE: (context) => const MainTabPage(),
-      //   MyRouter.WALLET_DETAILS_PAGE: (context) => const WalletDetailsPage(),
-      //   MyRouter.TRANS_PAGE: (context) => const TransPage(),
-      //   MyRouter.WEB_PAGE: (context) => const WebPage(),
-      //   MyRouter.ADD_TAB_PAGE: (context) => const AddCoinPage(),
-      //   MyRouter.RECV_PAGE: (context) => const RecvPage(),
-      //   MyRouter.SEND_PAGE: (context) => const SendPage(),
-      //   // MyRouter.QR_PAGE: (context) => const MyQRPage(),
-      //   MyRouter.RESET_PASSWD_PAGE: (context) => ResetPasswordPage(),
-      //   MyRouter.CHANGE_PASSWD_PAGE: (context) => ChangePasswordPage(),
-      //   MyRouter.CHECK_MNEM_PAGE: (context) => CheckMnemPage(),
-      //   MyRouter.CONTECTS_PAGE: (context) => const MyContactsPage(),
-      //   MyRouter.ABOUT_PAGE: (context) => const AboutPage(),
-      // },
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -132,7 +96,6 @@ class _MyAppState extends ConsumerState<MyApp> {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       locale: _locale,
-      // localeListResolutionCallback: (locales, supportedLocales) => _locale,
       builder: (context, child) {
         child = botToastBuilder(context, child);
         child = EasyLoading.init()(context, child);

@@ -1,24 +1,30 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:blockchain_utils/blockchain_utils.dart' as chains;
 
 import 'package:fzm_wallet/models/chain33.dart';
 import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/models/const/tokens.dart';
 import 'package:fzm_wallet/models/wapi.dart';
 import 'package:fzm_wallet/models/config.dart';
 import 'package:fzm_wallet/models/tx.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
 
 void main() {
+  // TestWidgetsFlutterBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   group('BTY Tests', () {
     late Chain33Api bty;
-    final btyToken = nativeCoinList.where((e) => e.symbol == 'BTY').first;
+    late Coin btyToken;
     late TokenTxArgs btyArgs;
     late String btyPrivKey;
     const from = '15AvnuWS9ELE7R1NDfrJotjmjB8R7QqkPr';
     const to = '1JvhkjuebpLJ1ZHGXyCTDHyct5taUzgRRt';
 
     setUp(() async {
+      await initCoinList();
       bty = Chain33Api(config: btyConfig);
+      btyToken = nativeCoinList.where((e) => e.symbol == 'BTY').first;
       btyPrivKey =
           'f91002892b763eaf71602c8d2ebf92c3406ad6a70dd1a1ea9a07a9a5cfb587d2';
       final txFee = await bty.getFee();
@@ -59,6 +65,11 @@ void main() {
       }
     });
 
+    test('getBalance, should return balance of a address', () async {
+      final balance = await bty.getBalance(from);
+      Log.d('hex: $balance');
+    });
+
     test('privateKeyToAddress should return a valid address', () async {
       final pub = walletApi.privToPub('BTY',
           'f91002892b763eaf71602c8d2ebf92c3406ad6a70dd1a1ea9a07a9a5cfb587d2');
@@ -73,14 +84,16 @@ void main() {
 
   group('YCC Tests', () {
     late Chain33Api ycc;
-    final yccToken = nativeCoinList.where((e) => e.symbol == 'YCC').first;
+    late Coin yccToken;
     late TokenTxArgs yccArgs;
     late String yccPrivKey;
     late String from;
     late String to;
 
     setUp(() async {
+      await loadTokens();
       ycc = Chain33Api(config: yccConfig);
+      yccToken = nativeCoinList.where((e) => e.symbol == 'YCC').first;
       yccPrivKey =
           '79303d241aaac1e556b334dac82fe9c50718c902fdced7cba07e514be0905640';
       from = '0xa3F59D43cf7F90Ee1E14A4C47F260612Fc23B9Cf';
