@@ -466,10 +466,12 @@ class _SendPageState extends ConsumerState<SendPage> {
       fee: fee,
       note: note,
     );
+
+    EasyLoading.show(status: '正在发送交易，请等待...');
+
     final priv = await wallet.getAccountPrivateKey(
         chain: coin.chain, password: password);
 
-    EasyLoading.show(status: '正在发送交易，请等待...');
     final tx = await walletApi.sendToken(privateKey: priv, args: targs);
     EasyLoading.dismiss();
     if (mounted) {
