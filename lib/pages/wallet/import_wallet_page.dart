@@ -5,6 +5,7 @@ import 'package:fzm_wallet/models/coin.dart';
 import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/models/wallet.dart';
+import 'package:fzm_wallet/pages/main_tab_page.dart';
 import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
 import 'package:fzm_wallet/widget/widgets.dart';
@@ -322,6 +323,21 @@ class _ImportWalletPageState extends State<ImportWalletPage>
     if (!mounted) {
       return;
     }
-    Navigator.pop(context);
+    final list = store.getWalletList();
+    if (list.length == 1) {
+      store.setCurrentWallet(list[0]);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainTabPage()),
+        (route) => false,
+      );
+    } else {
+      Navigator.pop(context);
+      // Navigator.pushAndRemoveUntil(
+      //   context,
+      //   MaterialPageRoute(builder: (context) => const WalletIndexPage()),
+      //   (route) => false,
+      // );
+    }
   }
 }

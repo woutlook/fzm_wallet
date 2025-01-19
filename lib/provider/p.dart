@@ -22,9 +22,9 @@ final toAddressProvider = StateProvider<String?>((ref) {
   return null;
 });
 
-final urlProvider = StateProvider<String?>((ref) {
-  return null;
-});
+// final urlProvider = StateProvider<String?>((ref) {
+//   return null;
+// });
 
 class WalletNotifier extends StateNotifier<Wallet> {
   WalletNotifier(super.state);

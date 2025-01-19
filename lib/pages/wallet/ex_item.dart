@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fzm_wallet/models/ex_bean.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/pages/webview_page.dart';
-import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';
-// import 'package:fzm_wallet/widget/widgets.dart';
 
 class ExItemPage extends ConsumerWidget {
   final ExItem ex;
@@ -14,10 +12,6 @@ class ExItemPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    //   return buildLayout(context, child: _build(context, ref));
-    // }
-
-    // Widget _build(BuildContext context, ref) {
     String logo = '';
     if (ex.id == 1) {
       logo = 'assets/icons/dd069dfef3b7d7af31cf75d610b2a109.png';
@@ -59,10 +53,9 @@ class ExItemPage extends ConsumerWidget {
                   child: InkWell(
                     onTap: () {
                       final url = app.appUrl;
-                      ref.read(urlProvider.notifier).state = url;
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        return const WebPage();
+                        return WebPage(url: url ?? '');
                       }));
                       toast(app.name ?? "");
                     },

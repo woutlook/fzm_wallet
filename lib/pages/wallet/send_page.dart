@@ -7,7 +7,7 @@ import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/tx.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/models/wallet.dart';
-import 'package:fzm_wallet/pages/my/contects.dart';
+import 'package:fzm_wallet/pages/my/contacts.dart';
 import 'package:fzm_wallet/pages/wallet/wallet_item.dart';
 import 'package:fzm_wallet/provider/p.dart';
 import 'package:fzm_wallet/utils/app_utils.dart';

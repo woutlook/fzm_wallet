@@ -59,7 +59,7 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final contectsList = ref.watch(contectsProvider);
-        final coins = wallet.coinList;
+        final coins = nativeCoinList;
         return ListView.builder(
           shrinkWrap: true,
           itemCount: contectsList.length,
@@ -98,10 +98,9 @@ class _MyContactsPageState extends ConsumerState<MyContactsPage> {
 
   Widget _buildContectsItem(context, contect, coins, constraints) {
     final coinIconList = contect.addressList?.map((e) {
-      final url =
-          coins.firstWhere((coin) => coin.id.toString() == e.coinId).icon ?? '';
+      final url = coins.firstWhere((coin) => coin.chain == e.chain).icon ?? '';
       try {
-        return Image.network(
+        return Image.asset(
           url,
           width: 20,
           height: 20,
@@ -312,17 +311,14 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
   }
 
   Widget _build(context) {
-    final wallet = ref.watch(walletProvider);
-    final filterCoins = wallet.coinList;
-    final coinItems = filterCoins.map((e) {
+    final coinItems = nativeCoinList.map((e) {
       return coinItem(
         context,
         e,
         onTap: () {
           setState(() {
             _contect ??= Contact();
-            _contect!.addAddress(
-                ContactsAddress(coinId: e.id.toString(), address: ''));
+            _contect!.addAddress(ContactsAddress(chain: e.chain, address: ''));
             _addressControllerList.add(TextEditingController());
           });
           Navigator.pop(context);
@@ -419,10 +415,11 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
               ),
               const SizedBox(height: 10),
               Expanded(
-                child: _buildAddressList(context, filterCoins),
+                child: _buildAddressList(context),
               ),
               const SizedBox(height: 20),
               LayoutBuilder(builder: (context, filterCoins) {
+                final wallet = ref.read(walletProvider);
                 return widget.isEdit
                     ? blackButton('去转账', () {
                         if (wallet.type == WalletType.address) {
@@ -450,15 +447,15 @@ class _EditContractsPageState extends ConsumerState<EditContractsPage> {
     );
   }
 
-  Widget _buildAddressList(context, coins) {
+  Widget _buildAddressList(context) {
+    final coins = nativeCoinList;
     return ListView.builder(
       itemCount: _contect?.addressList?.length ?? 0,
       itemBuilder: (context, index) {
         Coin? coin;
         if (_contect?.addressList?.isNotEmpty ?? false) {
-          coin = coins.firstWhere((e) =>
-              e.id.toString() ==
-              (_contect?.addressList?[index].coinId ?? "90"));
+          coin = coins.firstWhere(
+              (e) => e.chain == (_contect?.addressList?[index].chain ?? 'BTY'));
         }
         _coin = _coin ?? coin;
         return Padding(

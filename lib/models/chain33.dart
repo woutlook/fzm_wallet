@@ -322,23 +322,21 @@ class Chain33Api extends WApi {
       throw Exception('Failed to get tx by hash: $err');
     }
     final result = resp['result'];
-    final json = result['tx'];
-    final amount =
-        json['amount'] != null ? BigInt.from(json['amount']) : BigInt.zero;
+    final tx= result['tx'];
     final symbol = config.nativeToken;
     return Tx(
       tokenSymbol: symbol,
       tokenName: symbol,
       decimals: 8,
       chain: config.name,
-      from: json['from'],
-      to: json['to'],
+      from: tx['from'],
+      to: tx['to'],
       status: 0,
       hash: hash,
-      value: amount,
+      value: double.parse(tx['amountfmt']),
       blockNumber: result['height'],
-      timestamp: result['blocktime'],
-      gas: BigInt.from(json['fee']),
+      timestamp: result['blockTime'],
+      fee: double.parse(tx['feefmt']),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fzm_wallet/pages/my/about.dart';
-import 'package:fzm_wallet/pages/my/contects.dart';
+import 'package:fzm_wallet/pages/my/contacts.dart';
 import 'package:fzm_wallet/pages/my/download_page.dart';
 import 'package:fzm_wallet/pages/my/lang_page.dart';
 import 'package:fzm_wallet/pages/wallet/my_wallets_page.dart';

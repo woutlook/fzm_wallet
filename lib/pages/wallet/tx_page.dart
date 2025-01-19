@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/models/config.dart';
+import 'package:fzm_wallet/models/tx.dart';
 import 'package:fzm_wallet/models/wallet.dart';
 import 'package:fzm_wallet/pages/wallet/recv_page.dart';
 import 'package:fzm_wallet/pages/wallet/send_page.dart';
+import 'package:fzm_wallet/pages/wallet/tx_details_page.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:fzm_wallet/provider/p.dart';
@@ -243,9 +246,9 @@ class _TransPageState extends ConsumerState<TransPage>
                             child: TabBarView(
                               controller: _tabcontroller,
                               children: [
-                                _buildTabView(context, coin),
-                                _buildTabView(context, coin),
-                                _buildTabView(context, coin),
+                                _buildTabView(context, coin, 0),
+                                _buildTabView(context, coin, 1),
+                                _buildTabView(context, coin, 2),
                               ],
                             ),
                           ),
@@ -263,22 +266,95 @@ class _TransPageState extends ConsumerState<TransPage>
     );
   }
 
-  Widget _buildTxListItem(context, index, tx) {
-    return ListTile(
-      title: Text('title $index'),
-      subtitle: Text('subtitle $index'),
+  Widget _buildTxListItem(context, index, Tx tx, coin, bool isSend) {
+    String status = '完成';
+    if (tx.status == 2) {
+      status = '失败';
+    } else if (tx.status == 1) {
+      status = '确认中';
+    }
+    double value = tx.value;
+    if (isSend) {
+      value = -value;
+    }
+    final timestamp = DateTime.fromMillisecondsSinceEpoch(tx.timestamp! * 1000);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) {
+            final url = getChainScanUrl(coin.chain);
+            return TxDetailsPage(
+              tx: tx,
+              scanUrl: url,
+              chain: coin.chain,
+            );
+          }));
+        },
+        child: Card(
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '$value ${coin.name}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      status,
+                      style: TextStyle(
+                          color: tx.status == 2 ? Colors.red : Colors.green,
+                          fontSize: 14),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      formatAddress(tx.to, start: 8, end: 8),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      timestamp.toString().substring(0, 19),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildTabView(context, coin) {
+  Widget _buildTabView(context, coin, int index) {
     final txlistP = ref.watch(txListProvider(coin));
+    final wallet = ref.watch(walletProvider);
+    final address = wallet.getAccountAddress(chain: coin.chain).toLowerCase();
     return txlistP.when(
         data: (list) {
-          final tabIndex = _tabcontroller.index;
-          if (tabIndex == 1) {
-            list.retainWhere((tx) => tx.from == coin.address);
-          } else if (tabIndex == 2) {
-            list.retainWhere((tx) => tx.to == coin.address);
+          if (index == 1) {
+            list =
+                list.where((tx) => tx.from.toLowerCase() == address).toList();
+          } else if (index == 2) {
+            list = list.where((tx) => tx.to.toLowerCase() == address).toList();
           }
           return Padding(
             padding: const EdgeInsets.all(10),
@@ -286,7 +362,8 @@ class _TransPageState extends ConsumerState<TransPage>
               itemCount: list.length,
               itemBuilder: (context, index) {
                 final tx = list[index];
-                return _buildTxListItem(context, index, tx);
+                return _buildTxListItem(
+                    context, index, tx, coin, tx.from.toLowerCase() == address);
               },
             ),
           );

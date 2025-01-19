@@ -86,7 +86,7 @@ final tronConfig = ChainConfig(
 
 final btyConfig = ChainConfig(
   rpcUrl: 'https://mainnet.bityuan.com/api',
-  scanUrl: 'https://mainnet.bityuan.com',
+  scanUrl: 'https://mainnet.bityuan.com/tx/',
   name: 'bityuan',
   nativeToken: 'BTY',
   decimals: 8,
@@ -94,9 +94,26 @@ final btyConfig = ChainConfig(
 
 final yccConfig = ChainConfig(
   rpcUrl: 'https://yuan.org/api',
-  scanUrl: 'https://www.yuan.org/blockChainBrowser',
+  scanUrl: 'https://www.yuan.org/',
   name: 'yuanChain',
   nativeToken: 'YCC',
   decimals: 8,
   chainId: 999,
 );
+
+String getChainScanUrl(String chain) {
+  switch (chain) {
+    case 'ETH':
+      return ethereumConfig.scanUrl!;
+    case 'BNB':
+      return bscConfig.scanUrl!;
+    case 'TRX':
+      return tronConfig.scanUrl!;
+    case 'BTY':
+      return btyConfig.scanUrl!;
+    case 'YCC':
+      return yccConfig.scanUrl!;
+    default:
+      return '';
+  }
+}

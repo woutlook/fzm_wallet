@@ -4,7 +4,7 @@ class Tx {
   final String hash;
   final String from;
   final String to;
-  final BigInt value;
+  final double value;
   final String chain;
   final String tokenSymbol;
   final String tokenName;
@@ -13,9 +13,9 @@ class Tx {
   final int status;
   final int? blockNumber;
   final int? timestamp;
-  final BigInt? gasPrice;
-  final BigInt? gas;
-  final BigInt? fee;
+  // final double? gasPrice;
+  // final double? gas;
+  final double? fee;
   final String? note;
 
   Tx({
@@ -31,8 +31,8 @@ class Tx {
     this.decimals = 18,
     this.blockNumber,
     this.timestamp,
-    this.gasPrice, // ETH
-    this.gas, // ETH
+    // this.gasPrice, // ETH
+    // this.gas, // ETH
     this.fee, // BTC
     this.note,
   });
@@ -42,7 +42,7 @@ class Tx {
       'hash': hash,
       'from': from,
       'to': to,
-      'value': value.toString(),
+      'value': value,
       'chain': chain,
       'tokenSymbol': tokenSymbol,
       'tokenName': tokenName,
@@ -51,9 +51,9 @@ class Tx {
       'contractAddr': contractAddr,
       'blockNumber': blockNumber,
       'timestamp': timestamp,
-      'gasPrice': gasPrice?.toString(),
-      'gas': gas?.toString(),
-      'fee': fee?.toString(),
+      // 'gasPrice': gasPrice,
+      // 'gas': gas,
+      'fee': fee,
       'note': note,
     };
   }
@@ -69,8 +69,8 @@ class Tx {
       tokenName: json['tokenName'],
       timestamp: json['timestamp'],
       status: json['status'],
-      gasPrice: json['gasPrice'],
-      gas: json['gas'],
+      // gasPrice: json['gasPrice'],
+      // gas: json['gas'],
       decimals: json['decimals'],
       note: json['note'],
       contractAddr: json['contractAddr'],
@@ -90,8 +90,8 @@ class Tx {
       tokenName: json['tokenName'],
       decimals: json['decimals'],
       status: 0,
-      gas: json['gasUsed'],
-      gasPrice: BigInt.parse(json['gasPrice']),
+      // gas: json['gasUsed'],
+      // gasPrice: json['gasPrice'],
       contractAddr: json['contractAddr'],
       blockNumber: json['blockNumber'],
       timestamp: json['timestamp'],
@@ -144,50 +144,50 @@ class Tx {
     );
   }
 
-  factory Tx.fromBitcoin(Map<String, dynamic> json,
-      {required String addr,
-      required String chain,
-      String tokenSymbol = 'BTC',
-      String tokenName = 'Bitcoin'}) {
-    final inputList = json['inputs'] as List;
-    final fromList = inputList.map((e) => e['prev_out']['addr']).toList();
-    final fromValueList = inputList.map((e) => e['prev_out']['value']).toList();
-    final toList = (json['out'] as List).map((e) => e['addr']).toList();
-    final toValueList = (json['out'] as List).map((e) => e['value']).toList();
-    final from = fromList.contains(addr) ? addr : fromList[0];
-    final to = toList.contains(addr) ? addr : toList[0];
-    final fromValue =
-        fromList.contains(addr) ? fromValueList[fromList.indexOf(addr)] : 0;
-    final toValue =
-        toList.contains(addr) ? toValueList[toList.indexOf(addr)] : 0;
-    BigInt value = BigInt.zero;
-    if (from != to) {
-      if (from == addr) {
-        value = BigInt.from(fromValue);
-      } else {
-        value = BigInt.from(toValue);
-      }
-    } else {
-      value = BigInt.from(toValue - fromValue);
-      if (from == addr) {
-        value = -value;
-      }
-    }
+  // factory Tx.fromBitcoin(Map<String, dynamic> json,
+  //     {required String addr,
+  //     required String chain,
+  //     String tokenSymbol = 'BTC',
+  //     String tokenName = 'Bitcoin'}) {
+  //   final inputList = json['inputs'] as List;
+  //   final fromList = inputList.map((e) => e['prev_out']['addr']).toList();
+  //   final fromValueList = inputList.map((e) => e['prev_out']['value']).toList();
+  //   final toList = (json['out'] as List).map((e) => e['addr']).toList();
+  //   final toValueList = (json['out'] as List).map((e) => e['value']).toList();
+  //   final from = fromList.contains(addr) ? addr : fromList[0];
+  //   final to = toList.contains(addr) ? addr : toList[0];
+  //   final fromValue =
+  //       fromList.contains(addr) ? fromValueList[fromList.indexOf(addr)] : 0;
+  //   final toValue =
+  //       toList.contains(addr) ? toValueList[toList.indexOf(addr)] : 0;
+  //   BigInt value = BigInt.zero;
+  //   if (from != to) {
+  //     if (from == addr) {
+  //       value = BigInt.from(fromValue);
+  //     } else {
+  //       value = BigInt.from(toValue);
+  //     }
+  //   } else {
+  //     value = BigInt.from(toValue - fromValue);
+  //     if (from == addr) {
+  //       value = -value;
+  //     }
+  //   }
 
-    return Tx(
-      hash: json['hash'],
-      from: from,
-      to: to,
-      value: value,
-      chain: chain,
-      tokenSymbol: tokenSymbol,
-      tokenName: tokenName,
-      timestamp: json['time'],
-      blockNumber: json['block_height'],
-      fee: json['fee'],
-      status: 0,
-    );
-  }
+  //   return Tx(
+  //     hash: json['hash'],
+  //     from: from,
+  //     to: to,
+  //     value: value,
+  //     chain: chain,
+  //     tokenSymbol: tokenSymbol,
+  //     tokenName: tokenName,
+  //     timestamp: json['time'],
+  //     blockNumber: json['block_height'],
+  //     fee: BigInt.parse(json['fee']),
+  //     status: 0,
+  //   );
+  // }
 }
 
 // class Token {
