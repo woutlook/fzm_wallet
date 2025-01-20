@@ -303,7 +303,10 @@ class _AddCoinItemState extends ConsumerState<_AddCoinItem> {
           ),
           const Spacer(),
           IconButton(
-            icon: Icon(!added ? Icons.add_outlined : Icons.remove_outlined),
+            icon: Icon(
+              !added ? Icons.add_outlined : Icons.remove_outlined,
+              color: Colors.black,
+            ),
             onPressed: () {
               setCoin(wallet, widget.coin);
               setState(() {});
