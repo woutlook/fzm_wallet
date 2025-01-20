@@ -282,8 +282,8 @@ class Coin {
 //   'BNB': defaultCoins['BNB']!,
 // };
 
-final defaultCoinIds = [154, 155, 90, 1, 641, 288, 694, 600];
-final nativeCoinIds = [154, 155, 90, 1, 641];
+final defaultCoinIds = [154, 732, 155, 90, 1, 641, 288, 694, 600];
+final nativeCoinIds = [154, 732, 155, 90, 1, 641];
 
 List<Coin> allCoinList = [];
 List<Coin> defaultCoinList = [];

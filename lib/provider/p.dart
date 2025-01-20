@@ -60,19 +60,22 @@ final hideLess1Provider = StateProvider<Map<String, bool>>((ref) {
 });
 
 final balanceProvider =
-    FutureProvider.autoDispose.family<double, Coin>((ref, coin) async {
-  try {
-    final wallet = ref.watch(walletProvider);
-    final chain = coin.chain;
-    final who = wallet.getAccountAddress(chain: chain);
-    final balance = await walletApi.getBalance(
-        who: who,
-        chain: chain,
-        contractAddr: coin.contract!,
-        coinSymbol: coin.symbol!);
-    return balance;
-  } catch (e) {
-    return 0.0;
+    StreamProvider.autoDispose.family<double, Coin>((ref, coin) async* {
+  final wallet = ref.watch(walletProvider);
+  final chain = coin.chain;
+  final who = wallet.getAccountAddress(chain: chain);
+  while (true) {
+    try {
+      final balance = await walletApi.getBalance(
+          who: who,
+          chain: chain,
+          contractAddr: coin.contract!,
+          coinSymbol: coin.symbol!);
+      yield balance;
+    } catch (e) {
+      yield 0.0;
+    }
+    await Future.delayed(Duration(seconds: 10));
   }
 });
 

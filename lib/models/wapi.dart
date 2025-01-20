@@ -76,6 +76,9 @@ class _WalletApi {
   }
 
   chains.BipCoins? _getBipCoins(String chain, BTCAddressType type) {
+    if (chain == 'BTY0x') {
+      chain = 'ETH';
+    }
     String name = _getChainName(chain);
     chains.BipCoins? bipCoins;
     switch (type) {
@@ -354,6 +357,7 @@ abstract class WApi {
 
 Map<String, WApi> wapiMap = {
   'BTY': Chain33Api(config: btyConfig),
+  'BTY0x': Chain33Api(config: bty0xConfig),
   'YCC': Chain33Api(config: yccConfig),
   'ETH': EVMWApi(config: ethereumConfig),
   'BNB': EVMWApi(config: bscConfig),

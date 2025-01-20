@@ -13,6 +13,7 @@ import 'package:fzm_wallet/models/pb/coins.pb.dart';
 
 const String YCC = 'YCC';
 const String BTY = 'BTY';
+const String BTY0x = 'BTY0x';
 
 class Chain33Api extends WApi {
   Chain33Api({required super.config});
@@ -205,7 +206,9 @@ class Chain33Api extends WApi {
   Transaction _createTx({required TokenTxArgs args}) {
     final bigIntAmount = _toBigInt(args.amount, config.decimals);
     final bigIntFee = _toBigInt(args.fee ?? 0, config.decimals);
-    if (args.token.chain == YCC || args.token.chain == BTY) {
+    if (args.token.chain == YCC ||
+        args.token.chain == BTY ||
+        args.token.chain == BTY0x) {
       final action = CoinsAction(
         transfer: AssetsTransfer(
           to: args.to,
@@ -261,7 +264,7 @@ class Chain33Api extends WApi {
     required String privateKey,
     required Transaction tx,
   }) {
-    if (config.nativeToken == YCC) {
+    if (config.nativeToken == YCC || config.nativeToken == BTY0x) {
       return _signTxBTY(privateKey: privateKey, tx: tx, type: 2 << 12 | 1);
     } else if (config.nativeToken == BTY) {
       return _signTxBTY(privateKey: privateKey, tx: tx, type: 1);

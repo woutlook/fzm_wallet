@@ -70,7 +70,10 @@ abstract class Wallet {
   final Map<int, Coin> coins; // key is coin id, value is coin name
 
   Account get account;
-  List<Coin> get coinList => coins.values.toList();
+  List<Coin> get coinList {
+    final sortedKeys = coins.keys.toList()..sort();
+    return sortedKeys.map((e) => coins[e]!).toList();
+  }
 
   Wallet({
     required this.type,
@@ -199,6 +202,21 @@ class MnemonicWallet extends Wallet {
     return map;
   }
 
+  static Future<AccountInfo> _getAccountInfo(
+      {required String chain,
+      required String mnemonic,
+      required String password}) async {
+    final json = walletApi.getAccount(chain: chain, mnem: mnemonic);
+    final private = json['priv'];
+    final accInfo = AccountInfo(
+      address: json['address'],
+      publicKey: json['pub'],
+      chain: chain,
+      encryptedPrivKey: await store.encryptData(private, password),
+    );
+    return accInfo;
+  }
+
   static Future<MnemonicWallet> fromMnemonic({
     required String mnemonic,
     required String name,
@@ -206,16 +224,19 @@ class MnemonicWallet extends Wallet {
   }) async {
     final chains = wapiMap.keys.toList();
     final accMap = <String, AccountInfo>{};
+    final evmInfo = await _getAccountInfo(
+        chain: 'ETH', mnemonic: mnemonic, password: password);
     for (final chain in chains) {
-      final json = walletApi.getAccount(chain: chain, mnem: mnemonic);
-      final private = json['priv'];
-      final accInfo = AccountInfo(
-        address: json['address'],
-        publicKey: json['pub'],
-        chain: chain,
-        encryptedPrivKey: await store.encryptData(private, password),
-      );
-      accMap[chain] = accInfo;
+      if (chain == 'ETH' ||
+          chain == 'BNB' ||
+          chain == 'BTY0x' ||
+          chain == 'YCC') {
+        accMap[chain] = evmInfo;
+      } else {
+        final accInfo = await _getAccountInfo(
+            chain: chain, mnemonic: mnemonic, password: password);
+        accMap[chain] = accInfo;
+      }
     }
     final account = Account(
       accMap: accMap,

@@ -92,6 +92,14 @@ final btyConfig = ChainConfig(
   decimals: 8,
 );
 
+final bty0xConfig = ChainConfig(
+  rpcUrl: 'https://mainnet.bityuan.com/api',
+  scanUrl: 'https://mainnet.bityuan.com/tx/',
+  name: 'bityuan',
+  nativeToken: 'BTY0x',
+  decimals: 8,
+);
+
 final yccConfig = ChainConfig(
   rpcUrl: 'https://yuan.org/api',
   scanUrl: 'https://www.yuan.org/',

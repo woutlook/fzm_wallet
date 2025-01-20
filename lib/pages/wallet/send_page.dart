@@ -138,7 +138,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                 ),
                 const Spacer(),
                 Text(
-                  '$_balance ${coin.chain}',
+                  '$_balance ${coin.name}',
                   style: const TextStyle(color: Colors.blue, fontSize: 16),
                 )
               ],
@@ -178,7 +178,7 @@ class _SendPageState extends ConsumerState<SendPage> {
                 ),
                 const Spacer(),
                 Text(
-                  '${(_setFee ?? setFee).toStringAsFixed(5)} ${coin.chain}',
+                  '${(_setFee ?? setFee).toStringAsFixed(5)} ${coin.name}',
                   style: const TextStyle(color: Colors.black, fontSize: 16),
                 )
               ],
