@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fzm_wallet/models/coin.dart';
+import 'package:fzm_wallet/pages/wallet/add_coin_page.dart';
 
 import 'package:fzm_wallet/pages/wallet/coin_item.dart';
 import 'package:fzm_wallet/pages/wallet/my_wallets_page.dart';
@@ -140,7 +141,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                            const WalletDetailsPage()));
+                                            const AddCoinPage()));
                                 setState(() {});
                               },
                               child: const Image(
