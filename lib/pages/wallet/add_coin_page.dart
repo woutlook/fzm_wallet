@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fzm_wallet/models/coin.dart';
 import 'package:fzm_wallet/models/const/recommon_list.dart';
+import 'package:fzm_wallet/models/store.dart';
 import 'package:fzm_wallet/models/tab_coin.dart';
 import 'package:fzm_wallet/models/const/app_colors.dart';
 import 'package:fzm_wallet/models/wallet.dart';
@@ -84,7 +85,7 @@ class _AddCoinPageState extends ConsumerState<AddCoinPage>
         )
         .toList();
     final wallet = ref.watch(walletProvider);
-    final coins = wallet.coinList;
+    final coins = defaultCoinList;
 
     return Scaffold(
       appBar: AppBar(
@@ -225,13 +226,14 @@ class _AddCoinItemState extends ConsumerState<_AddCoinItem> {
     super.initState();
   }
 
-  void setCoin(Wallet wallet, Coin coin) {
+  Future<void> setCoin(Wallet wallet, Coin coin) async {
     final Map<int, Coin> coins = wallet.coins;
     if (coins.containsKey(coin.id)) {
       wallet.removeCoin(coin.id);
     } else {
       wallet.addCoin(coin);
     }
+    await store.setWallet(wallet);
     ref.read(walletProvider.notifier).updateWallet(wallet);
   }
 
@@ -307,8 +309,8 @@ class _AddCoinItemState extends ConsumerState<_AddCoinItem> {
               !added ? Icons.add_outlined : Icons.remove_outlined,
               color: Colors.black,
             ),
-            onPressed: () {
-              setCoin(wallet, widget.coin);
+            onPressed: () async {
+              await setCoin(wallet, widget.coin);
               setState(() {});
             },
           ),
